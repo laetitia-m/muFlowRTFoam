@@ -11,6 +11,8 @@
 namespace Foam
 {
 
+namespace fv
+{
 template<class Type>
 class adaptiveReactiveDdtScheme
 {
@@ -39,8 +41,10 @@ public:
 
     // Retourne le terme fvm::ddt en fonction du champ indicateur
     tmp<GeometricField<Type, fvPatchField, volMesh>>
+    // tmp<fvMatrix<Type>>
     fvmDdt(GeometricField<Type, fvPatchField, volMesh>& vf) const
     {
+        // if (Foam::max(reactIndicator_).value() < 0.5)
         if (reactIndicator_.internalField().max() < 0.5)
         {
             // phase réactive → Euler
@@ -54,6 +58,7 @@ public:
     }
 };
 
+}
 }
 
 #endif

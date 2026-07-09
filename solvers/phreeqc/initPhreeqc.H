@@ -4,7 +4,6 @@
 #include <PhreeqcRM.h>
 #include "IPhreeqc.hpp"
 #include "IPhreeqcPhast.h"
-//int nthreads = 3;
 
 int nxyz,ph_ncomp,ph_nspc,ph_gcomp,ph_nsolu;
 double my_basic_callback(double x1, double x2, const char *str, void *cookie);
@@ -61,20 +60,26 @@ public:
 	std::vector<std::string> spcNames;
 
 };
+
+//--------------------------- INITIALISATION ------------------------------
+
 int phqInit(my_phq & freak)
 {
-	nxyz = freak.data[0];ph_ncomp = freak.data[1];ph_gcomp = freak.data[2];
-	ph_nsolu=freak.data[3];std::cerr << " ph nxyz "<< nxyz <<"\n";
-	int i,j;
+	nxyz     = freak.data[0];
+	ph_ncomp = freak.data[1];
+	ph_gcomp = freak.data[2];
+	ph_nsolu = freak.data[3];
+	std::cerr << " ph nxyz "<< nxyz <<"\n";
+	int i;
+	std::size_t j;
 	if (ph_ncomp<0) {bool EK = true;freak.EK = EK;}
 	else {std::vector<double> c(nxyz*ph_ncomp,0.);freak.c = c;}
 	
 	#ifdef USE_MPI
 		PhreeqcRM* phreeqc_rm = freak.PhreeqcRM_ptr;
 	#else
-		
-		int nthreads;
-		PhreeqcRM *phreeqc_rm = new PhreeqcRM (nxyz, nthreads);
+		int nthreads=1;
+		PhreeqcRM *phreeqc_rm = new PhreeqcRM(nxyz, nthreads);
 		freak.PhreeqcRM_ptr = phreeqc_rm;		
 	#endif
 	
@@ -99,25 +104,23 @@ int phqInit(my_phq & freak)
 				
 		std::vector<double> rv(nxyz, 1.);
 		status = phreeqc_rm->SetRepresentativeVolume(rv);   // RV is one dm3 of medium
-		//std::cout<<"poro size "<<freak.poro.size()<<"\n";
 		status = phreeqc_rm->SetPorosity(freak.poro);
 		freak.deltaMvol.resize(nxyz,0.);
 
 		// Open for writing file
-		//std::quoted prf = "phq_out";
 		status = phreeqc_rm->SetFilePrefix("debug");
 		phreeqc_rm->OpenFiles();
-		//std::cout << "Outfile opened " << "\n";
-		//set mask
 		std::vector<int> print_chemistry_mask;
 		print_chemistry_mask.resize(nxyz, 1);
-		//for (int i=0;i<nxyz;i++) {print_chemistry_mask[i]=1;}
 		status = phreeqc_rm->SetPrintChemistryMask(print_chemistry_mask);
 
 		//load database and chemistry files and make the first run of the chem file
 		status = phreeqc_rm->SetPrintChemistryOn(true, true, false); // workers, initial_phreeqc, utility
 		status = phreeqc_rm->LoadDatabase(freak.DB);
 		std::cout << "dbase opened " << "\n";
+
+		// Do something with status toi avoid compiler warnings
+		std::cout << "phreeqc_rm status: "+status << std::endl;
 
 		// Demonstrate add to Basic: Set a function for Basic CALLBACK after LoadDatabase
 		register_basic_callback(&freak);
@@ -141,7 +144,6 @@ int phqInit(my_phq & freak)
 		// Set array of initial conditions by reading the solution... numbers in data
 		std::vector<int> ic1;
 		ic1.resize(nxyz*7, -1);std::cout<<"ic1 size "<<ic1.size()<<"\n";
-		//std::vector<double> f1;
 		int icnt = 4;int mx; // to consider the first 5 numbers : nxyz,ncomp,gcomp,nsolu,units (++ in the first line of the for makes 5 numbers)
 		for (i = 0; i < 7; i++) // Solution,Equilibrium phases,Exchange,Surface,Gas phase,Solid solutions,Kinetics
 		{
@@ -152,7 +154,6 @@ int phqInit(my_phq & freak)
 				icnt++; 
 				for (int j=0;j<nxyz;j++) {
 					ic1[i*nxyz+j] = freak.data[icnt];
-					//if ((j==0)||(j==nxyz-2)) {std::cout << i << " cell "<< j << " " << freak.data[icnt]<< "\n";} 
 					}
 				}
 			else 		
@@ -161,7 +162,6 @@ int phqInit(my_phq & freak)
 					{
 					icnt++;ic1[i*nxyz+j] = freak.data[icnt]; 
 					mx = std::max(mx,freak.data[icnt]);
-					//if ((j==0)||(j==nxyz-2))  {std::cout << i << " cell "<< j << " " << freak.data[icnt]<< "\n";} 
 					}
 				}
 			if (i==1) {freak.nphase=mx;}
@@ -169,11 +169,7 @@ int phqInit(my_phq & freak)
 			if (i==3) {freak.nsurf=mx;}
 		}
 		std::cout << "end fill here\n";
-		/*
-		const std::vector<IPhreeqcPhast *> w = phreeqc_rm->GetWorkers();
-		w[0]->AccumulateLine("Delete; -all");
-		int w0 = w[0]->RunAccumulated();
-		*/
+
 		//set initial conditions
 		status = phreeqc_rm->InitialPhreeqc2Module(ic1);
 		std::cout << "end init Ic \n";
@@ -183,12 +179,8 @@ int phqInit(my_phq & freak)
 		std::cout << "ncell "<< ncell << " ph_ncomp "<< ph_ncomp<< " starting init phreeqc \n";
 		status = phreeqc_rm->SetTemperature(freak.temp);std::cout<<"temp "<<freak.temp[0]<<"\n";
 		if (ph_gcomp>0) {
-			//status = freak.PhreeqcRM_ptr->SetSaturation(freak.wsat); // keep the order of three lines to set values
-			//status = phreeqc_rm->SetPressure(freak.p);
 			status = freak.PhreeqcRM_ptr->SetGasPhaseVolume(freak.gvol);
 			status = freak.PhreeqcRM_ptr->SetGasCompMoles(freak.gm);
-		//std::cout<<"gvol "; for (j=0;j<5;j++){std::cout<<freak.gvol[j]<<" ";}std::cout<<"\n";
-		//std::cout<<"gm "; for (j=0;j<5;j++){ for (i=0;i<ph_gcomp;i++) {std::cout<<freak.gm[i*nxyz+j]<<" ";} std::cout<<"\n";}
 			}
 		status = phreeqc_rm->RunCells();
 		
@@ -200,52 +192,29 @@ int phqInit(my_phq & freak)
 		bc1.resize(ph_nsolu,0);
 		for (i=0;i<ph_nsolu;i++) {bc1[i]=i;}//std::cout<<"in phq bc "<<i<<"\n";}
 		status = phreeqc_rm->InitialPhreeqc2Concentrations(freak.bc_conc, bc1);
-		//std::cout<<" ek "<<freak.EK<<"\n";
 		if (freak.EK>0) {
 			int nspc = phreeqc_rm->GetSpeciesCount(); std::cout<<"phq eK nspc "<<nspc<<"\n";
 			freak.nspc = nspc;
-			const std::vector<std::string> &spcNames = phreeqc_rm->GetSpeciesNames();
-			//for (i=0;i<freak.nspc;i++) {std::cout<<" "<<spcNames[i];} std::cout<<"\n";
 			const std::vector <double> &z = phreeqc_rm->GetSpeciesZ();
 			freak.z = z;
-			//for (i=0;i<nspc;i++) {std::cout<<z[i]<<"\n";}
 			std::vector<double> c(nxyz*nspc,0.);freak.c = c;
 			status = phreeqc_rm->GetSpeciesConcentrations(freak.c);
 			status = phreeqc_rm->InitialPhreeqc2SpeciesConcentrations(freak.bc_species, bc1);
-			//std::cout<<"phq spc \n"; 
-			//for (j=0;j<nxyz;j++){for (i=0;i<nspc;i++) {if (freak.z[i]!=0){std::cout<<freak.c[i*nxyz+j]<<" ";}} std::cout<<"\n";}
 			const std::vector <double> &diff25 = phreeqc_rm->GetSpeciesD25();
 			freak.diff25 = diff25; 
-			//std::cout<<"phq eK diff25 0 ";for (i=0;i<nspc;i++) {std::cout<<" "<<diff25[i]<<"\n";}
 		}
 		if (ph_gcomp>0) {
 			status = phreeqc_rm->GetSaturation(freak.wsat);
 			status = phreeqc_rm->GetGasCompPressures(freak.g);
 			status = phreeqc_rm->GetGasCompMoles(freak.gm);
-			//status = phreeqc_rm->GetGasPhaseVolume(freak.gvol);
-			//std::cout << "in phq poro "<<freak.poro[1]<<"\n";
-			//std::cout << "c 1-4 ";for (int i=0; i<4;i++){std::cout<< freak.c[i*nxyz+1]<<" ";} std::cout<<"\n";
-			//std::cout << "c 5-9 ";for (int i=4; i<8;i++){std::cout<< freak.c[i*nxyz+1]<<" ";} std::cout<<"\n";
-			//std::cout<<"Vm "<<freak.gvol[0]/freak.gm[0]<<" "<<freak.gvol[0]/freak.gm[1]<<"\n"; // false
-		//std::cout<<"gvol "; for (j=0;j<5;j++){std::cout<<freak.gvol[j]<<" ";}std::cout<<"\n";
-		//std::cout<<"gm "; for (j=0;j<5;j++){ for (i=0;i<ph_gcomp;i++) {std::cout<<freak.gm[i*nxyz+j]<<" ";} std::cout<<"\n";}
-			for (i=0;i<gcomp.size();i++) { if (gcomp[i]=="H2O(g)") {freak.iGwater = i;} }
-			//std::cout << "c 0 ";for (int i=0; i<ph_ncomp;i++){std::cout<< freak.c[i*nxyz+0]<<" ";} std::cout<<"\n";
+			for (j=0;j<gcomp.size();j++) { if (gcomp[j]=="H2O(g)") {freak.iGwater = j;} }
 		}
-	//std::cout << "c 1 ";for (int i=0; i<ph_ncomp;i++){std::cout<< freak.c[i*nxyz+1]<<" ";} std::cout<<"\n";
 	std::cout <<"end phq init "<<"\n";
 		
 		//printing to file
 		status = phreeqc_rm->CloseFiles();
-		//status = freak.PhreeqcRM_ptr->SetDumpFileName("phqAll.dmp");
-		//status = phreeqc_rm->SetPrintChemistryOn(true, false, true); // workers, initial_phreeqc, utility
-		// below : trial, does not work	
-		//const std::vector<std::string> &PPcomp = freak.PhreeqcRM_ptr->phreeqc_bin->Get_PPassemblage(0)->cxxPPassemblage->Get_EltList();
-		//std::cout<<"PP comp "; for (i=0;i<PPcomp.size();i++) {std::cout<<PPcomp[i]<<" ";} std::cout <<"\n";
-
-	
 	}
-	catch (PhreeqcRMStop)
+	catch (const PhreeqcRMStop& e)
 	{
 		std::cerr << "failed with an error in PhreeqcRM." << std::endl;
 	/* we don't want to have mpi abort as we can now handle error son phreeqc
@@ -267,82 +236,49 @@ int phqInit(my_phq & freak)
 	
 };
 	
-	//--------------------------- RUN ------------------------------
-
 int phqRun(my_phq & freak)
 {
 	try
 	{
-	IRM_RESULT status;
-	//PhreeqcRM* phreeqc_rm = freak.PhreeqcRM_ptr;
-	status = freak.PhreeqcRM_ptr->SetErrorHandlerMode(1);
-	//status = freak.PhreeqcRM_ptr->SetFilePrefix("phq_run");
-	//freak.PhreeqcRM_ptr->OpenFiles();
-	//std::vector<int> print_chemistry_mask;
-	//print_chemistry_mask.resize(nxyz, 1);//print_chemistry_mask[0]=1;print_chemistry_mask[50]=1;
-	//status = freak.PhreeqcRM_ptr->SetPrintChemistryMask(print_chemistry_mask); 
-	//status = freak.PhreeqcRM_ptr->SetPrintChemistryOn(true, false, false); // workers, initial_phreeqc, utility
-	const std::vector<std::string> &components = freak.PhreeqcRM_ptr->GetComponents();
-	const std::vector<std::string> &gcomp = freak.PhreeqcRM_ptr->GetGasComponents(); std::cout<<"phq ngcomp sz "<<gcomp.size()<<" phq ws "<<freak.wsat[0]<<"\n";
-	nxyz = freak.data[0];
-	std::cout << "in phq nxyz "<<nxyz<<" size c "<<freak.c.size()<<" poro "<<freak.poro[2]<<"\n";
-	
-	status = freak.PhreeqcRM_ptr->SetTemperature(freak.temp);
-	//std::cout<<"temp 0-5 ";for (int j=0; j<5;j++){std::cout<<freak.temp[j]<<" ";} std::cout<<"\n";
-	//std::cout << "c 0 ";
-	//for (int j=0;j<8;j++) {for (int i=0; i<ph_ncomp;i++){std::cout<< freak.c[i*nxyz]<<" ";} std::cout<<"\n";}
-	//std::cout << "c mid ";for (int i=0; i<ph_ncomp;i++){std::cout<< freak.c[i*nxyz+int(nxyz/2)]<<" ";} std::cout<<"\n";
-	//std::cout << "c end ";for (int i=0; i<ph_ncomp;i++){std::cout<< freak.c[i*nxyz+nxyz-2]<<" ";} std::cout<<"\n";
-	//std::cout<<"press 0-5 ";for (int j=0; j<5;j++){std::cout<<freak.p[j]<<" ";} std::cout<<"\n";//don't use it pressure is calculated by phq
-	//for (int j=0;j<nxyz;j++) {float c0=freak.c[6*nxyz+j];if ((c0>4e-4)&&(c0<6e-4)) {std::cout << "cp "<<j<<" ";for (int i=0; i<ph_ncomp;i++){std::cout<< freak.c[i*nxyz+j]<<" ";} std::cout<<"\n";} }
-	if (gcomp.size()>0) {
-		//std::cout<<"nb gcomp before "<<gcomp.size()<<"\n";//<<" gvol 3 "<<freak.gvol[0]<<" sat "<<freak.wsat[0]<<"\n";
-		//std::cout<<"g mid ";for (int i=0;i<ph_gcomp;i++) {std::cout <<freak.g[i*nxyz+int(nxyz/2)]<<" ";} std::cout<<"\n";
-		//std::cout<<"gm mid ";for (int i=0;i<ph_gcomp;i++) {std::cout <<freak.gm[i*nxyz+int(nxyz/2)]<<" ";} std::cout<<"\n";
-		status = freak.PhreeqcRM_ptr->SetSaturation(freak.wsat); // keep the 3 lines and the order of three lines to set values
-		status = freak.PhreeqcRM_ptr->SetGasPhaseVolume(freak.gvol);
-		status = freak.PhreeqcRM_ptr->SetGasCompMoles(freak.gm);
-		//status = freak.PhreeqcRM_ptr->SetPressure(freak.p); // we cannot set preesur ein fact
-		//for (int j=0;j<8;j++) {std::cout<<j<<" p "<<freak.p[j]<<" gvol "<<freak.gvol[j]<<" wsat "<<freak.wsat[j]<<" g1 "<<freak.gm[nxyz+j]<<"\n";}
+		IRM_RESULT status;
+		status = freak.PhreeqcRM_ptr->SetErrorHandlerMode(1);
+		const std::vector<std::string> &gcomp = freak.PhreeqcRM_ptr->GetGasComponents(); std::cout<<"phq ngcomp sz "<<gcomp.size()<<" phq ws "<<freak.wsat[0]<<"\n";
+		nxyz = freak.data[0];
+		std::cout << "in phq nxyz "<<nxyz<<" size c "<<freak.c.size()<<" poro "<<freak.poro[2]<<"\n";
+		
+		status = freak.PhreeqcRM_ptr->SetTemperature(freak.temp);
+		if (gcomp.size()>0) {
+			status = freak.PhreeqcRM_ptr->SetSaturation(freak.wsat); // keep the 3 lines and the order of three lines to set values
+			status = freak.PhreeqcRM_ptr->SetGasPhaseVolume(freak.gvol);
+			status = freak.PhreeqcRM_ptr->SetGasCompMoles(freak.gm);
 		}
-	else 
-		{
-		status = freak.PhreeqcRM_ptr->SetSaturation(freak.wsat);
+		else {
+			status = freak.PhreeqcRM_ptr->SetSaturation(freak.wsat);
 		}
-	//std::cout<<"phq wsat[-2] "<<freak.wsat[nxyz-2];
-	status = freak.PhreeqcRM_ptr->GetSaturation(freak.wsat);
-	//std::cout<<"phq wsat[-2] "<<freak.wsat[nxyz-2];
+		status = freak.PhreeqcRM_ptr->GetSaturation(freak.wsat);
 
-	if (freak.EK) {status = freak.PhreeqcRM_ptr->SpeciesConcentrations2Module(freak.c);}
-	else {status = freak.PhreeqcRM_ptr->SetConcentrations(freak.c);}
-	status = freak.PhreeqcRM_ptr->SetTimeStep(freak.tstep);std::cout<<"tstep "<<freak.tstep<<"\n";
-	//----- run here ------
-	status = freak.PhreeqcRM_ptr->RunCells();
-	std::cout<<"run done \n";
-	
-	//status = freak.PhreeqcRM_ptr->GetSaturation(freak.wsat);
-	//status = freak.PhreeqcRM_ptr->GetTemperature(freak.temp);
-	if (freak.EK) {status = freak.PhreeqcRM_ptr->GetSpeciesConcentrations(freak.c);}
-	else {status = freak.PhreeqcRM_ptr->GetConcentrations(freak.c);}
-	
-	//for (int j=0;j<8;j++) {for (int i=0; i<ph_ncomp;i++){std::cout<< freak.c[i*nxyz]<<" ";} std::cout<<"\n";}
-	
-	if (gcomp.size()>0) {
-		status = freak.PhreeqcRM_ptr->GetGasCompPressures(freak.g);
-		status = freak.PhreeqcRM_ptr->GetGasCompMoles(freak.gm);
-		status = freak.PhreeqcRM_ptr->GetGasPhaseVolume(freak.gvol);
-		freak.p = freak.PhreeqcRM_ptr->GetPressure();
-		//for (int j=0;j<8;j++) {std::cout<<j<<" p "<<freak.p[j]<<" gvol "<<freak.gvol[j]<<" ";for (int i=0;i<gcomp.size();i++) {std::cout<<freak.g[i*nxyz+j]<<" "<<freak.gm[i*nxyz+j]<<" ";}std::cout<<"\n";}
-		//std::cout<<"nb gcomp after "<<ph_gcomp<<" gvol mid "<<freak.gvol[int(nxyz/2)]<<" sat "<<freak.wsat[int(nxyz/2)]<<"\n";
-		/*
-		std::cout<<"g mid ";for (int i=0;i<ph_gcomp;i++) {std::cout <<freak.g[i*nxyz+int(nxyz/2)]<<" ";} std::cout<<"\n";
-		std::cout<<"gm mid ";for (int i=0;i<ph_gcomp;i++) {std::cout <<freak.gm[i*nxyz+int(nxyz/2)]<<" ";} std::cout<<"\n";
-		std::cout<<"p mid ";std::cout<<freak.p[nxyz/2]<<"\n";
-		*/
+		if (freak.EK) {status = freak.PhreeqcRM_ptr->SpeciesConcentrations2Module(freak.c);}
+		else {status = freak.PhreeqcRM_ptr->SetConcentrations(freak.c);}
+		status = freak.PhreeqcRM_ptr->SetTimeStep(freak.tstep);std::cout<<"tstep "<<freak.tstep<<"\n";
+		
+		//----- run here ------
+		status = freak.PhreeqcRM_ptr->RunCells();
+		std::cout<<"run done \n";
+		if (freak.EK) {status = freak.PhreeqcRM_ptr->GetSpeciesConcentrations(freak.c);}
+		else {status = freak.PhreeqcRM_ptr->GetConcentrations(freak.c);}
+				
+		if (gcomp.size()>0) {
+			status = freak.PhreeqcRM_ptr->GetGasCompPressures(freak.g);
+			status = freak.PhreeqcRM_ptr->GetGasCompMoles(freak.gm);
+			status = freak.PhreeqcRM_ptr->GetGasPhaseVolume(freak.gvol);
+			freak.p = freak.PhreeqcRM_ptr->GetPressure();
 		}
-	std::cout<<"end phq run \n ";
+		std::cout<<"end phq run \n ";
+
+		// Do something with status toi avoid compiler warnings
+		std::cout << "phreeqc_rm status: "+status << std::endl;
 	}
-	catch (PhreeqcRMStop)
+	catch (const PhreeqcRMStop& e)
 	{
 		std::cerr << "failed with an error in PhreeqcRM." << std::endl;
 	/*
@@ -370,20 +306,18 @@ int getSelOutput(my_phq & freak)
 	try
 	{
 	IRM_RESULT status;
-	//PhreeqcRM* phreeqc_rm = freak.PhreeqcRM_ptr;
-	//int n_user = freak.PhreeqcRM_ptr->GetNthSelectedOutputUserNumber(0);
-	//status = freak.PhreeqcRM_ptr->SetCurrentSelectedOutputUserNumber(n_user);
 	int ncol = freak.PhreeqcRM_ptr->GetSelectedOutputColumnCount();//std::cout<<"in phq ncol "<<ncol<<"\n";
 	std::vector<std::string> headings(ncol);
-	//int nphase=0;
 	for (int i = 0; i < ncol; i++)
 		{
 			status = freak.PhreeqcRM_ptr->GetSelectedOutputHeading(i,headings[i]);
-			//if (headings[i].substr(0,2)=="d_")  {nphase +=1;}
 		}
 	nxyz = freak.data[0];//std::cout<<"in phq selout nxyz "<<nxyz<<" for cell 0 and nxyz-2\n";
 	std::vector<double> so(ncol*nxyz);
 	status = freak.PhreeqcRM_ptr->GetSelectedOutput(so);
+	// Do something with status toi avoid compiler warnings
+	std::cout << "phreeqc_rm status: "+status << std::endl;
+
 	freak.nselect = ncol-6; //-nphase;
 	freak.spc.resize((freak.nselect)*nxyz,0);
 	for (int j = 0; j < nxyz; j++)
@@ -393,13 +327,11 @@ int getSelOutput(my_phq & freak)
 			{
 				if (headings[i].substr(0,2)=="d_") {freak.deltaMvol[j]+=so[i*nxyz + j];}
 				freak.spc[(i-6)*nxyz + j] = so[i*nxyz + j];
-				//if ((j==0)||(j==nxyz-2)) {std::cout<< "selout sp "<< i << " : " << so[i*nxyz + j] << "\n";}
-					//}
 			}
 		}
 	}
 	}
-	catch (PhreeqcRMStop)
+	catch (const PhreeqcRMStop& e)
 	{
 		std::cerr << "failed with an error in PhreeqcRM." << std::endl;
 	#ifdef USE_MPI
@@ -418,41 +350,32 @@ int getSelOutput(my_phq & freak)
 	return EXIT_SUCCESS;
 };
 
-int phqTest(std::string time) {
-	//IRM_RESULT status;
-	//int ph_ncomp = freak.PhreeqcRM_ptr->FindComponents();
-	return 1;
-	};
-
 int phqRestart(my_phq freak, std::vector<int> & ph_data, std::string time,std::vector<double> c_ph,std::vector<double> g_ph) 
 {
-	//namespace fs = std::filesystem;
 	IRM_RESULT status;int ncomp,ngcomp,nphas;std::cout<<"in restart \n";
 	//read data in the given timestep t
 	std::ifstream inputSpc{cur_dir+"/time/Species"};
-	//std::ofstream spc2{cur_dir/time/"Species_bak"}; 
-	//std::string line;
-	//while (std::getline(inputSpc, line)) {spc2 << line << "\n"; } 
 	std::vector<double>Species = {std::istream_iterator<float>{inputSpc}, {}};
 
 	// the idea is to build a long string with the instructions and to runString (but phreeqc ha not been run before)
-
-	//nxyz = freak.data[0];
-	//int ph_ncomp = freak.PhreeqcRM_ptr->FindComponents(); 
 	const std::vector<std::string> comp = freak.PhreeqcRM_ptr->GetComponents();// std::cout<<"phq comp0 "<<comp[0]<<"\n";
 	const std::vector<std::string> gcomp = freak.PhreeqcRM_ptr->GetGasComponents();																				
 	const std::vector<std::string> phasStr = freak.PhreeqcRM_ptr->GetEquilibriumPhases(); 
 	int nspec = freak.PhreeqcRM_ptr->GetSelectedOutputColumnCount()-6;
 	nphas = phasStr.size();
+
 	//get phqfoam data
 	nxyz=ph_data[0];ncomp=ph_data[1];ngcomp=ph_data[2]; //!!! nxyz here is inside the ractive part
+
 	//read old initchem to get the list of exchange & surface (one exch or surf assemblage/line)
 	std::vector<std::string> initChem;
 	std::ifstream inputChem{cur_dir+"/initChem.pqi" };
 	initChem = {std::istream_iterator<std::string>{inputChem}, {}};
 	std::vector<std::string> seloStr,exchStr,surfStr,gasStr,kinStr;
-	int flagSelo,flagE,flagS,flagG,flagK;
-	flagSelo=1;int cnt,exlength,sulength,glength;
+	int flagSelo,flagE,flagS,flagK;
+	int cnt,exlength,sulength;
+	flagE=0;flagS=0;flagSelo=1;
+	cnt=0;exlength=0;sulength=0;
 	for (size_t i=0;i<initChem.size();i++)
 		{
 		cnt+=1;
@@ -463,11 +386,11 @@ int phqRestart(my_phq freak, std::vector<int> & ph_data, std::string time,std::v
 		if (initChem[i]=="-equilibrate") {
 			if (flagE==1) {exlength=cnt;}
 			if (flagS==1) {sulength=cnt;}		   
-			flagE=0;flagS=0;flagG=0;cnt=0;
+			flagE=0;flagS=0;cnt=0;
 			}
 		if (initChem[i]=="Kinetics") //supposed to be at the end of the file
 			{flagK=1;cnt=0;
-			for (int j=i;j<initChem.size();j++){kinStr.push_back(initChem[j]);}
+			for (size_t j=i;j<initChem.size();j++){kinStr.push_back(initChem[j]);}
 			break;
 			}
 		if (flagE==1) {exchStr.push_back(initChem[i]);}
@@ -475,6 +398,7 @@ int phqRestart(my_phq freak, std::vector<int> & ph_data, std::string time,std::v
 		}
 	int nexch=freak.nexch;	int nsurf=freak.nsurf;
 	std::cout<<"inichem read , nexch, nsurf "<< nexch<<" "<<nsurf<<" n data "<<ph_data.size()<<"\n";
+	
 	//Solution,Equilibrium phases,Exchange,Surface,Gas phase,Solid solutions,Kinetics
 	std::ofstream outPhq{cur_dir+"/phqfoam1.txt"};
 	for (int i=0;i<5;i++) {outPhq<<ph_data[i]<<" ";} outPhq<<"\n";
@@ -500,6 +424,8 @@ int phqRestart(my_phq freak, std::vector<int> & ph_data, std::string time,std::v
 		for (int i = 0; i < ncol; i++)
 		{
 			status = freak.PhreeqcRM_ptr->GetSelectedOutputHeading(i,headings[i]);
+			// Do something with status toi avoid compiler warnings
+			std::cout << "phreeqc_rm status: "+status << std::endl;
 			if (headings[i]==phasStr[k])  {
 				indxP[k]=i-6;std::cout<<" phas "<<i<<" "<<k<<" "<<headings[i]<<" "<<phasStr[k]<<" "<<indxP[k]<<"\n";
 				k+=1;
@@ -507,8 +433,7 @@ int phqRestart(my_phq freak, std::vector<int> & ph_data, std::string time,std::v
 		}
 	}
 	std::ofstream outChem{cur_dir+"/initChem1.pqi"};
-	//std::string oo = "-";
-	int nexchj,nsurfj,ngasj,start;
+	int nexchj,nsurfj,start;
 	for (size_t i=0;i<seloStr.size()-1;i++) { if (seloStr[i][0]=='-') {outChem<<";";} outChem<<seloStr[i]<<" ";} outChem<<"\n";
 	for (int j=0;j<nxyz;j++)
 		{
@@ -535,33 +460,9 @@ int phqRestart(my_phq freak, std::vector<int> & ph_data, std::string time,std::v
 		}  
 	if (flagK==1) 
 		{
-		for (int i=0;i<kinStr.size();i++) {outChem<<kinStr[i]<<" ";}
+		for (size_t i=0;i<kinStr.size();i++) {outChem<<kinStr[i]<<" ";}
 		}
 	outChem.close();	
-	/*
-	std::string inputPhq;//std::cout<<" test "<<c_ph[4*nxyz+233]<<"\n";
-	for (int j=0;j<nxyz;j++)
-		{
-		string js=std::to_string(j);
-		inputPhq+="Solution "+js+"; units mol/kgw ;"; // find the solution (this has been read by opf) st
-		for (int i=4;i<ncomp;i++) {inputPhq += comp[i]+" "+std::to_string(c_ph[i*nxyz+j])+";"; } // conc in solution
-		//inputPhq <<" pH "<<Species[j*nspec]<<"; pe "<<Species[j*nspec+1]<<"; ";
-		inputPhq+="Equilibrium_Phases "+js+"; ";
-		for (int i=0;i<nphas;i++) {inputPhq+=phasStr[i]+" 0 "+std::to_string(Species[j*nspec+2+i*2])+";";}
-		inputPhq+="Exchange "+js+"; "; // just write equilibrate with exchanger
-		for (int i=2;i<nexch;i++) {inputPhq+=exchStr[i]+" ";}
-		inputPhq+=";-e "+js+";";
-		inputPhq+="Surface "+js+"; "; // just write equilibrate with surface
-		for (int i=2;i<nsurf;i++) {inputPhq+=surfStr[i]+" ";}
-		inputPhq+=";-e "+js+";-no_edl \n";
-		}  
-	std::cout<<"end string \n";
-	std::string inS="Equilibrium_Phases 10;Fluorite 0 1";
-	status = freak.PhreeqcRM_ptr->RunString(false, true, false, inS.c_str());  // bool : workers, initial, utility
-	status = freak.PhreeqcRM_ptr->RunString(false, true, false, inputPhq.c_str());  // bool : workers, initial, utility
-	status = freak.PhreeqcRM_ptr->RunFile(false, true, false, cur_dir+"/restart.txt");  // bool : workers, initial, utility
-	std::cout<<"phq string run \n";
-	*/
 	return 1;
 };
 
@@ -573,7 +474,9 @@ void register_basic_callback(void *cookie)
 	int mpi_tasks, mpi_myself;
 #endif
 	int	method_number = 1001;
-	data = (my_phq *) cookie;
+	// data = (my_phq *) cookie;
+	data = static_cast<my_phq *> ( cookie);
+
 
 #ifdef USE_MPI
 	MPI_Comm_size(MPI_COMM_WORLD, &mpi_tasks);
@@ -585,7 +488,7 @@ void register_basic_callback(void *cookie)
 #endif
 
 	const std::vector<IPhreeqcPhast *> w = data->PhreeqcRM_ptr->GetWorkers();
-	for (int i = 0; i < (int) w.size(); i++)
+	for (size_t i = 0; i < w.size(); i++)
 	{
 		w[i]->SetBasicCallback(my_basic_callback, cookie);
 	}
@@ -593,18 +496,18 @@ void register_basic_callback(void *cookie)
 
 double my_basic_callback(double x1, double x2, const char *str, void *cookie)
 {
-	my_phq *data_ptr = (my_phq *) cookie;
+	// my_phq *data_ptr = (my_phq *) cookie;
+	my_phq *data_ptr = static_cast<my_phq*>(cookie);
+
 	PhreeqcRM *phreeqcrm_ptr = data_ptr->PhreeqcRM_ptr;
 	std::string option(str);
 
-	int cn = (int) x1;
+	// int cn = (int) x1;
+	int cn = static_cast<int>(x1);
 	if (cn >= 0 && cn < phreeqcrm_ptr->GetChemistryCellCount())
 	{
-		const std::vector < std::vector <int> > & back = phreeqcrm_ptr->GetBackwardMapping();
 		if (option == "WSAT")
 		{
-			//int cn = back[rm_cell_number][0];
-			//std::cout<<cn<<" wsat "<<data_ptr->wsat[cn]<<"\n";
 			return data_ptr->wsat[cn];
 		}
 		if (option == "PORO") { return data_ptr->poro[cn]; }

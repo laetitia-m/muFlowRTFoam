@@ -8,7 +8,8 @@ std::vector<int> indexC(labelList &cells, std::vector<float> &data)
 	for (int i=0; i<cells.size();i++)  // reads the first ncells lines
 		{
 		auto iter = std::find(cells.begin(), cells.end(), static_cast<int>(data[i*4+1]));
-		int i1 = {std::distance(cells.begin(), iter)};  //Info << i << " icd "<< icd << " cll " << cells_[i] << " indx " << a << endl; // cell number in cellsData //index of cellsData in cells_
+		label i1 = std::distance(cells.begin(), iter);  
+		//Info << i << " icd "<< icd << " cll " << cells_[i] << " indx " << a << endl; // cell number in cellsData //index of cellsData in cells_
 		c1[i] = cells[i1];
 		}
     return c1;

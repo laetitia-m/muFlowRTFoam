@@ -133,18 +133,22 @@ int main(int argc, char *argv[])
 
     my_phq freak;
 
-    //-- Init openFoam
-    #include "setRootCase.H"
-    #include "createTime.H"
+	//-- OpenFOAM init
+	#include "setRootCase.H" //-- Process the command-line arguments + determine root and case directories
+		
+    //-- Init mesh and time
+	#include "createTime.H"
     #include "createMesh.H"
+
+	//-- Create fields
     #include "readGravitationalAcceleration.H"
-    #include "createFields.H"
-    #include "readPicardControls.H"
-    #include "flow/createThetaFields.H"
+	#include "createFields.H" // Need to be before readPicardControls.H
+	#include "flow/createThetaFields.H" // Create 
     #include "transport/createCFields.H"
     #include "transport/createTFields.H"
     #include "EK/createEKFields.H"
 
+    #include "readPicardControls.H"
     #include "readCoupling.H"
 
 	scalar deltaTFact = 1;
@@ -513,7 +517,7 @@ int main(int argc, char *argv[])
 		presentTime = mesh.time().value();
 		float dt1 = wtime - presentTime;  //to catch the writing time
 		float dt2 = tnext - presentTime; //to catch the time when BC change
-		Info<<"t "<<presentTime<<" dt1 "<<dt1<<" dt2 "<<dt2<< " newdt "<<newDeltaT<<" maxdt "<< maxDeltaT<<" flg BC "<<flagBC<<endl;
+		Info<<"Cuurent time (t): "<<presentTime<<" Writing time (dt1): "<<dt1<<" Time BC change (dt2): "<<dt2<< " newdt "<<newDeltaT<<" maxdt "<< maxDeltaT<<" flg BC "<<flagBC<<endl;
 		flagW = 0;
 		
 		if (reactStep>0) {newDeltaT = min(newDeltaT,reactStep);}
@@ -569,11 +573,14 @@ int main(int argc, char *argv[])
 		//-- Solve coupling case
 		//---------------------------------//
 		//-- Solve coupling case (we assume all coupling require h/C loop) *******************************
+		int iterPicard;
+		float resPicard, residu0;
+
 		if (coupling ==1) // we assume Picard
 		{
 			iterPicard = 0;
 			resPicard = 1000.;
-			float residu0 = 1000;
+			residu0 = 1000;
 			deltaTFact = 1.;
 			h1 = h;
 

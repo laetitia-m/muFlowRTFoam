@@ -2,7 +2,7 @@
 //-- Creation of fields related to
 //-- unsaturated properties
 /**********************************************/
-Info << "Reading unsaturated properties... FlowType is " << flowType << endl;
+Info << "Reading and creating water unsaturated properties... FlowType is " << flowType << endl;
 
 //---------------------------------//
 //-- Pressure head hp
@@ -122,7 +122,7 @@ if (flowType == 3) // unsaturated flow type
 volScalarField krw ("krw",unity);
 surfaceScalarField krwf ("krwf",fvc::interpolate(krw,"krw"));
 
-// Derivative of permeability with respect to saturation.
+// Derivative of water relative permeability with respect to water saturation.
 // Used in CoatsNo.H.
 volScalarField dkrwdS ("dkrwdS", unity); 
 
@@ -140,7 +140,7 @@ surfaceScalarField Lf = rhowf*Kf*krwf/muwf;
 if (flowType == 3) // unsaturated flow type
 {
 	Mf = rhowf*mag(g)*Kf*krwf/muwf;// Mf alread exists
-	Lf = rhowf*Kf*krwf/muwf; // I think we do not need this as it also defined outside the flowType condition.
+	Lf = rhowf*Kf*krwf/muwf; // LM: I think we do not need this as it also defined outside the flowType condition.
 }
 
 //---------------------------------//

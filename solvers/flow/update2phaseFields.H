@@ -17,7 +17,7 @@ Se = min(max((sw-sw_min)/(sw_max-sw_min),mysmall),1-mysmall); // Effective water
 //---------------------------------//
 //-- Update capillary pressure and gradient of Pc
 //---------------------------------//
-pc == pc0*pow(pow(Se,-1/m_vg)-1,1/n_vg); // == instead of =? Should return a boolean?
+pc == pc0*pow(pow(Se,-1/m_vg)-1,1/n_vg); // LM: == instead of =? Should return a boolean?
 gradpc  = fvc::grad(pc,"pc");//
 gradpcf = fvc::interpolate(gradpc,"gradpc");//
 

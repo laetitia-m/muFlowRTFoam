@@ -4,7 +4,7 @@ scalar activateThermal(transportProperties.lookupOrDefault<scalar>("activateTher
 const scalar dTmax = runTime.controlDict().lookupOrDefault("dTmax", 0.02);
 double mxT,sT,dtForT;
 
-scalar dT=1e-9;scalar dT1=1e-9;
+scalar dT=1e-9;
 
 //NB (dimensionType MASS , LENGTH , TIME , TEMPERATURE ,MOLES , CURRENT , LUMINOUS_INTENSITY)
 Info<< "Reading field T\n" << endl;

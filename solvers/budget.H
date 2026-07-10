@@ -1,5 +1,5 @@
 // get the the water discharge/recharge at fixed heads cells and sum them for all cells to have the balance
-int ib,i1;
+int i1;
 std::cout<<"start budget \n";
 for (i=0;i<cellsHfix.size();i++)
     {if (qHfix[i]>0) {sqIHfix+=qHfix[i]*dt;} else {sqOHfix+=qHfix[i]*dt;}} 

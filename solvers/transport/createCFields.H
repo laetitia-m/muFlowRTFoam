@@ -6,7 +6,7 @@ dimensionedScalar Dw0(transportProperties.lookupOrDefault("Dw0",dimensionedScala
 dimensionedScalar Koc(transportProperties.lookupOrDefault("Koc",dimensionedScalar("Koc",dimVol/dimMass,0)));
 scalar transportSteady(transportProperties.lookupOrDefault<scalar>("transportSteady",0));
 scalar activateAge(transportProperties.lookupOrDefault<scalar>("activateAge",0));
-double dC,mnC,mxC,dff,dC0,sC,sC1;
+double dC,mnC,mxC,dff,sC,sC1;
 const scalar dCmax = runTime.controlDict().lookupOrDefault("dCmax", 0.02);
 
 scalar reactIndicator = 0; // indicator for reaction; 0 crank; 1 euler

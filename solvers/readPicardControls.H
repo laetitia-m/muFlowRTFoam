@@ -49,7 +49,6 @@ const scalar dTFactDecrease = runTime.controlDict().lookupOrDefault<scalar>("dTF
 const scalar dswmax = runTime.controlDict().lookupOrDefault("dswmax", 5e-3);
 scalar dswdTmax = dswmax/runTime.deltaTValue();
 scalar dsw = 0;
-scalar dsw_avg = 0;
 
 if (adjustTimeStep)
 {

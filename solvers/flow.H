@@ -18,7 +18,7 @@ if (flowType == 3) // unsaturated
     if (timeStepControl == "Picard")
     {
 	Info<<"in picard "<<endl;
-	iterPicard = 0; resPicard = 1000.;float residu0 = 1000;
+	iterPicard = 0; resPicard = 1000.; residu0 = 1000;
 	// this loop is imitated from Orgogozo Richards
 	deltaTFact = 1.;
 	sw1 = sw;

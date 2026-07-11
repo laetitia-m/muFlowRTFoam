@@ -101,7 +101,7 @@ volScalarField comp_g
 //-- Fluxes are computed here, because it is needed in interpolation function
 surfaceScalarField phi = phiw;
 surfaceScalarField phig ("phig",phiw*0); // LM: This flux needs to be here because it is used in fvc:interpolate
-surfaceScalarField phiPc = ("phiPc",phiw*0);
+surfaceScalarField phiPc ("phiPc",phiw*0); // LM: use to have an equal phiPc = ("phiPc",phiw*0), not sure what is the difference...
 surfaceScalarField phiP ("phiP", phiw);
 
 //---------------------------------//

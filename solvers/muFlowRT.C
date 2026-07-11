@@ -386,11 +386,11 @@ int main(int argc, char *argv[])
 		std::ifstream inputImmobile{cur_dir+"/constant/options/immobile" }; // version 0 shall contain 0 for inactive and 1 for active reaction cell
 		immobStr = {std::istream_iterator<std::string>{inputImmobile}, {}};
 		immobile.resize(ph_ncomp,0);
-		for (i=0;i<immobStr.size();i++)
+		for (size_t ii=0;ii<immobStr.size();ii++)
 		{
-			int ic = std::find(freak.comp.begin(),freak.comp.end(),immobStr[i])-freak.comp.begin(); //find the position of str in comp
+			int ic = std::find(freak.comp.begin(),freak.comp.end(),immobStr[ii])-freak.comp.begin(); //find the position of str in comp
 			immobile[ic]=1;
-			std::cout<<"immob "<<immobStr[i]<<" "<<ic<<" "<<immobile[ic]<<"\n";
+			std::cout<<"immob "<<immobStr[ii]<<" "<<ic<<" "<<immobile[ic]<<"\n";
 		}
 		Info<<"end immobile "<<endl;
 	} //--<< End of activateReation

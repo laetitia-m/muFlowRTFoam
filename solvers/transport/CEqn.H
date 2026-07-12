@@ -1,11 +1,12 @@
 /**********************************************/
-//-- Solve for diffusion-dispersion equation C
+//-- Solve for diffusion-dispersion equation
+//-- For concentration C when no reaction
 /**********************************************/
 
 Info << "\n\n//******************************************************************//" << endl;
 Info << "//* * * * * * SOLVE DIFFUSION-DISPERSION EQUATION C * * * * * * * * //" << endl;
 Info << "//******************************************************************//" << endl;
-Info << "--->> Start solving diffusion-dispersion equation (concentration C) " << endl;
+Info << "--->> Start solving diffusion-dispersion equation (no reaction - concentration C) " << endl;
 
 //---------------------------------//
 //-- Variables
@@ -33,10 +34,10 @@ Info << "   - Effective diffusivity matrix: " << Deffw[15] << endl;
 //---------------------------------//
 Info << "   - Set up the boundary conditions... " << endl;
 
-//-- Concentration well boundary condition
+//-- Head well boundary condition
 if (cellsHwel.size()>0)
 {
-	Info << "     -- Concentration:: well boundary condition" << endl;
+	Info << "     -- Head:: well boundary condition" << endl;
 	if (time>tCwel)
 	{
 		output = getCbuffer("cwel",itCwel,cellsCwel.size()); 
@@ -60,11 +61,11 @@ if (cellsHwel.size()>0)
 	}
 }
 
-//-- GHB boundary condition
+//-- Head GHB boundary condition
 //-- OA: Hghb because Cghb may not be set here
 if (cellsHghb.size()>0)
 {
-	Info << "     -- Concentration:: GHB boundary condition" << endl;
+	Info << "     -- Head:: GHB boundary condition" << endl;
 	if (time>tCghb) 
 	{
 		output = getCbuffer("cghb",itCghb,cellsCghb.size()); 
@@ -88,11 +89,11 @@ if (cellsHghb.size()>0)
 	}
 }
 
-//-- Concentration fixed head boundary condition
+//-- Head fixed head boundary condition
 //-- OA: store the chfix conditions data
 if (cellsHfix.size()>0)
 {
-	Info << "     -- Concentration:: fixed head boundary condition" << endl;
+	Info << "     -- Head:: fixed head boundary condition" << endl;
 	if (time>tChfix) 
 	{
 		output = getCbuffer("chfix",itChfix,cellsChfix.size()); 
@@ -116,11 +117,11 @@ if (cellsHfix.size()>0)
 	}
 }
 
-//-- Concentration drain boundary condition
+//-- Head drain boundary condition
 //-- OA: for drain cells (only out), same as above, except that drains are constant in time
 if (cellsHdrn.size()>0)
 {
-	Info << "     -- Concentration:: drain boundary condition" << endl;
+	Info << "     -- Head:: drain boundary condition" << endl;
 	for (i=0; i<cellsHdrn.size(); i++) 
 	{ 
 		i1=cellsHdrn[i];
@@ -160,7 +161,7 @@ if (cellsCrch.size()>0)
 //-- OA: fixed cells done with ~ghb with very high conductance
 if (cellsCfix.size()>0)
 {
-	Info << "     -- Fixed concentration boundary condition" << endl;
+	Info << "     -- Concentration:: Fixed concentration boundary condition" << endl;
 	if (time>tCfix) 
 	{
 		output = getCbuffer("cfix",itCfix,cellsCfix.size()); 
@@ -233,8 +234,9 @@ CEqn.solve();
 //---------------------------------//
 //-- Compute dC: deltaC
 //---------------------------------//
-Info << "   - Remove negative C and compensate mass... " << endl;
+//-- Removing negative value increase artifially the total
 
+Info << "   - Remove negative C and compensate mass... " << endl;
 double dff=0;
 int imax=0;
 a=a*0;
@@ -263,7 +265,7 @@ for (int i=0;i<ncell;i++)
 	sC1+=C()[i]*eps[i]*mesh.V()[i];
 }
 
-//-- TODO LM:: clean the following output
+//-- LM:: do we need all the following output when not in debugging mode
 Info<<"     -- Overview of maximum concentration difference, max concentration and mass balance "<<endl;
 Info<<"       ---- Cell id "<<imax<<" with |C(t)-C(t-1)|="<<dC<<endl;
 Info<<"       ---- Maximum cell concentration found at t is "<<mxC<<" kg/m3"<<endl;
@@ -271,7 +273,8 @@ Info<<"       ---- Mass computed with    negative value "<<sC<<endl;
 Info<<"       ---- Mass computed without negative value "<<sC1<<endl;
 Info<<"       ---- Ratio of mass "<< sC/(sC1+SMALL)<<" & Delta mass "<< sC-sC1<<endl;
 
-C *= sC/(sC1+SMALL); // removing negative value increase artifially the total
+//- Ratio should be equalt to 1 if no mass added artificially
+C *= sC/(sC1+SMALL);
 dC = dC/(mxC+SMALL);
 
 //---------------------------------//
@@ -281,7 +284,7 @@ Info << "   - Compute the time step... " << endl;
 
 dtForC = dCmax/(max(dC,0)+SMALL)*runTime.deltaTValue(); // LM: need to better understand this condition
 
-//-- TODO LM:: clean the following output
+//-- LM:: do we need all the following output when not in debugging mode
 Info<< "     -- Current dt "<<runTime.deltaTValue()<< endl; 
 Info<< "     -- New dt computed from flow "<<newDeltaT<< endl; 
 Info<< "     -- New dt computed from concentration "<<dtForC << endl; 
@@ -289,5 +292,5 @@ Info<< "     -- New dt (min of flow and conc) "<<min(dtForC, newDeltaT) << endl;
 
 newDeltaT = min(dtForC, newDeltaT);
 
-Info << "--->> End solving diffusion-dispersion equation (concentration C). " << endl;
+Info << "--->> End solving diffusion-dispersion equation (no reaction - concentration C). " << endl;
 Info << "//******************************************************************//\n\n" << endl;

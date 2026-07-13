@@ -10,19 +10,19 @@ Info << "--->> Start solving the steady head equation (h) for flow " << endl;
 //---------------------------------//
 //-- Variables
 //---------------------------------//
-simpleControl simple(mesh); 
+simpleControl simple(mesh);
 
 double x; // relative saturated thickness
-double e=1e-5;
-int ilay,nc;
+double e = 1e-5;
+int ilay, nc;
 
 residu = 1e5;
 surfaceScalarField M1f = M0f;
 
-for (int ii=0;ii<50;ii++) // LM: why 50?
+for (int ii = 0; ii < 50; ii++) // LM: why 50?
 {
 	// a: relaxation factor?
-	double a = std::min(double(ii/20.),1.); // LM: a will always be ii/20.
+	double a = std::min(double(ii / 20.), 1.); // LM: a will always be ii/20.
 	Info << "   - Iteration: " << ii << endl;
 
 	/* if they are bc in Uw :-> removed from now one
@@ -38,46 +38,46 @@ for (int ii=0;ii<50;ii++) // LM: why 50?
 	//-- For unconfined flow
 	//---------------------------------//
 	//-- Compute the effective thickness and mobility
-	if (flowType==2)
+	if (flowType == 2)
 	{
 		Info << "     -- For unconfined flow, compute relative saturated thickness and mobilities... " << endl;
-		for (ilay=0;ilay<nlay;ilay++) //ilay will be used from top
-		{ 
-			for (i=0;i<ncell_lay;i++) 
+		for (ilay = 0; ilay < nlay; ilay++) // ilay will be used from top
+		{
+			for (i = 0; i < ncell_lay; i++)
 			{
-				nc = ilay*ncell_lay + i;
-				x = (h[nc]-zbot[nc])/thk[nc]; // Relative saturated thickness 
-				if (x<0) 
+				nc = ilay * ncell_lay + i;
+				x = (h[nc] - zbot[nc]) / thk[nc]; // Relative saturated thickness
+				if (x < 0)
 				{
 					dryCells.append(nc);
 				}
-				if (x<e && x>0) 
+				if (x < e && x > 0)
 				{
-					sw[nc]=pow(x,2)/(4*e)+x/2+e/4;
+					sw[nc] = pow(x, 2) / (4 * e) + x / 2 + e / 4;
 				} // same eq as in mdf USg (transport manual fg 21)
-				else if (x>1-e && x<1) 
+				else if (x > 1 - e && x < 1)
 				{
-					sw[nc]=1-pow((1-x),2)/(4*e)-(1-x)/2-e/4;
+					sw[nc] = 1 - pow((1 - x), 2) / (4 * e) - (1 - x) / 2 - e / 4;
 				}
-				else 
+				else
 				{
-					sw[nc]=std::max(std::min(x,sw_max[nc]),sw_min[nc]);
+					sw[nc] = std::max(std::min(x, sw_max[nc]), sw_min[nc]);
 				}
 			}
 		}
-	
-		forAll( mesh.owner() , iface ) 
+
+		forAll(mesh.owner(), iface)
 		{
-			oCell   = mesh.owner()[iface];
-			odCface = mag(oCf[iface]-oC[oCell]);
-			nCell   = mesh.neighbour()[iface];
-			ndCface = mag(oCf[iface]-oC[nCell]);
-			if (abs(mesh.Sf()[iface].z())<mag(mesh.Sf()[iface])*1e-5)  // Vertical faces
+			oCell = mesh.owner()[iface];
+			odCface = mag(oCf[iface] - oC[oCell]);
+			nCell = mesh.neighbour()[iface];
+			ndCface = mag(oCf[iface] - oC[nCell]);
+			if (abs(mesh.Sf()[iface].z()) < mag(mesh.Sf()[iface]) * 1e-5) // Vertical faces
 			{
-				scalar swm = (sw[oCell]*sw[nCell])/(odCface*sw[oCell]+ndCface*sw[nCell])*(ndCface+odCface);
-				Mf[iface] = M0f[iface]*swm;
+				scalar swm = (sw[oCell] * sw[nCell]) / (odCface * sw[oCell] + ndCface * sw[nCell]) * (ndCface + odCface);
+				Mf[iface] = M0f[iface] * swm;
 			}
-			else 
+			else
 			{
 				Mf[iface] = M0f[iface];
 			}
@@ -88,111 +88,114 @@ for (int ii=0;ii<50;ii++) // LM: why 50?
 	//-- Compute the mobility
 	//---------------------------------//
 	//-- Use of relaxation factor a
-	M1f = M0f*(1-a) + Mf *a;
+	M1f = M0f * (1 - a) + Mf * a;
 
 	//---------------------------------//
 	//-- Boundary conditions
 	//---------------------------------//
 	//-- OA: (can be simplified only the 1st time is needed)
 	//-- Initialisation
-	hSu=hSu*0;
-	hSp=hSp*0;
-	size_t i; //previous cells with values must be destroyed
+	hSu = hSu * 0;
+	hSp = hSp * 0;
+	size_t i; // previous cells with values must be destroyed
 
 	Info << "     -- Set up the boundary conditions... " << endl;
 
 	//-- Well discharge boundary condition
-	if (cellsHwel.size()>0)
+	if (cellsHwel.size() > 0)
 	{
 		Info << "       ---- Well discharge boundary condition. " << endl;
-		for (i=0; i<cellsHwel.size(); i++) 
+		for (i = 0; i < cellsHwel.size(); i++)
 		{
-			i1=cellsHwel[i];
-			v=mesh.V()[i1];
-			hSu[i1] = cellsHwelData[i*4+2]/v;
+			i1 = cellsHwel[i];
+			v = mesh.V()[i1];
+			hSu[i1] = cellsHwelData[i * 4 + 2] / v;
 		}
-	} 
-	
+	}
+
 	//-- GHB (general head) condition
-	if (cellsHghb.size()>0)
+	if (cellsHghb.size() > 0)
 	{
 		Info << "       ---- GHB boundary condition " << endl;
-		for (i=0; i<cellsHghb.size(); i++)
+		for (i = 0; i < cellsHghb.size(); i++)
 		{
-			i1=cellsHghb[i];
-			v=mesh.V()[i1];
-			hSu[i1] = cellsHghbData[i*4+2]/v;
-			hSp[i1] = cellsHghbData[i*4+3]/v; 
+			i1 = cellsHghb[i];
+			v = mesh.V()[i1];
+			hSu[i1] = cellsHghbData[i * 4 + 2] / v;
+			hSp[i1] = cellsHghbData[i * 4 + 3] / v;
 		}
 	}
 
 	//-- River boundary condition
-	if (cellsHriv.size()>0)
+	if (cellsHriv.size() > 0)
 	{
 		Info << "       ---- River boundary condition " << endl;
-		for (i=0; i<cellsHriv.size(); i++) 
+		for (i = 0; i < cellsHriv.size(); i++)
 		{
-			i1=cellsHriv[i];
-			v=mesh.V()[i1];
-			hSu[i1] = cellsHrivData[i*4+2]/v;
-			hSp[i1] = cellsHrivData[i*4+3]/v;
+			i1 = cellsHriv[i];
+			v = mesh.V()[i1];
+			hSu[i1] = cellsHrivData[i * 4 + 2] / v;
+			hSp[i1] = cellsHrivData[i * 4 + 3] / v;
 		}
 	}
 
 	//-- Drain boundary condition
-	if (cellsHdrn.size()>0)
+	if (cellsHdrn.size() > 0)
 	{
 		Info << "       ---- Drain boundary condition " << endl;
-		for (i=0; i<cellsHdrn.size(); i++) 
+		for (i = 0; i < cellsHdrn.size(); i++)
 		{
 			i1 = cellsHdrn[i];
-			v=mesh.V()[i1];
-			hSu[i1] = cellsHdrnData[i*4+2]/v;
-			hSp[i1] = cellsHdrnData[i*4+3]/v;
+			v = mesh.V()[i1];
+			hSu[i1] = cellsHdrnData[i * 4 + 2] / v;
+			hSp[i1] = cellsHdrnData[i * 4 + 3] / v;
 
 			//-- No flow if head below fixed one
-			if (h()[i1]< cellsHdrnData[i*4+2]/cellsHdrnData[i*4+3] ) 
+			if (h()[i1] < cellsHdrnData[i * 4 + 2] / cellsHdrnData[i * 4 + 3])
 			{
-				hSu[i1]/=1000.;
-				hSp[i1]/=1000.;
-			} 
+				hSu[i1] /= 1000.;
+				hSp[i1] /= 1000.;
+			}
 		}
-	} 
+	}
 
 	//-- Recharge boundary condition
-	if (cellsHrch.size()>0)
+	if (cellsHrch.size() > 0)
 	{
 		Info << "       ---- Recharge boundary condition " << endl;
 
-		int ibl,Rblok,nRblok;
-		if (ncell_row>1) 
+		int ibl, Rblok, nRblok;
+		if (ncell_row > 1)
 		{
-			Rblok= ncell_row;
+			Rblok = ncell_row;
 			nRblok = ncell_col;
 		} // case xsection
-		else 
+		else
 		{
 			Rblok = ncell_lay;
 			nRblok = nlay;
 		} // 3d case
-		
-		for (i=0; i<cellsHrch.size(); i++) 
+
+		for (i = 0; i < cellsHrch.size(); i++)
 		{
 			i1 = cellsHrch[i];
-			for (ibl=0;ibl<nRblok;ibl++)
+			for (ibl = 0; ibl < nRblok; ibl++)
 
 			{
-				nc=i1-ibl*Rblok; 
-				if (sw[nc]>=sw_max[nc]) {break;} ;
-			} //search for the first confined layer from the top
-			int ibl1 = max(0, ibl-1);// ilay1 from top
-			nc = i1-ibl1*Rblok;
-			if (hSu[nc]==0) 
+				nc = i1 - ibl * Rblok;
+				if (sw[nc] >= sw_max[nc])
+				{
+					break;
+				};
+			} // search for the first confined layer from the top
+			int ibl1 = max(0, ibl - 1); // ilay1 from top
+			nc = i1 - ibl1 * Rblok;
+			if (hSu[nc] == 0)
 			{
-				hSu[nc] += cellsHrchData[i*4+2]/mesh.V()[nc];
- // injeciton of recharge in the lowest unconfined layer
+				hSu[nc] += cellsHrchData[i * 4 + 2] / mesh.V()[nc];
+				// injeciton of recharge in the lowest unconfined layer
 			}
-		} 
+		}
 	}
 
 	//---------------------------------//
@@ -203,29 +206,29 @@ for (int ii=0;ii<50;ii++) // LM: why 50?
 	//-- Steady equation
 	fvScalarMatrix hEqnStd
 	(
-		-fvm::laplacian(Mf,h) 
-		+ fvm::Sp(hSp,h) 
+		-fvm::laplacian(Mf, h) 
+		+ fvm::Sp(hSp, h) 
 		== hSu
-	); 
-	
+	);
+
 	//-- Get the fixed head conditions
-	if (cellsHfix.size()>0)
+	if (cellsHfix.size() > 0)
 	{
-		for (i=0; i<cellsHfix.size(); i++) 
+		for (i = 0; i < cellsHfix.size(); i++)
 		{
-			hEqnStd.setReference(cellsHfix[i],cellsHfixData[i*4+2]);
+			hEqnStd.setReference(cellsHfix[i], cellsHfixData[i * 4 + 2]);
 		}
 	}
 
-	//-- Residual
+	//-- Solve and Residual
 	residu = hEqnStd.solve().initialResidual();
-	Info << "     -- Resiual:: " << residu 
-	    << ", Relaxation factor:: " << a 
-		<< ", Execution Time:: " << runTime.elapsedCpuTime() << " s"
-	<< endl;
-	
+	Info << "     -- Resiual:: " << residu
+		 << ", Relaxation factor:: " << a
+		 << ", Execution Time:: " << runTime.elapsedCpuTime() << " s"
+		 << endl;
+
 	//-- Stop condition: residual<1e-6 and at least 10 iteration
-	if ((ii>10)&&(residu<1e-6)) 
+	if ((ii > 10) && (residu < 1e-6))
 	{
 		break;
 	}
@@ -234,11 +237,9 @@ for (int ii=0;ii<50;ii++) // LM: why 50?
 	//-- Compute water fluxes and velocity
 	//---------------------------------//
 	Info << "     -- Water fluxes and velocity computation... \n" << endl;
-	phiw = hEqnStd.flux() ;
-	Uw   = fvc::reconstruct(phiw);
+	phiw = hEqnStd.flux();
+	Uw = fvc::reconstruct(phiw);
 }
 
 Info << "---<< End of solving the steady head equation (h) for flow." << endl;
-Info << "//******************************************************************//\n\n" << endl;
-
-
+Info << "//******************************************************************//\n\n"<< endl;

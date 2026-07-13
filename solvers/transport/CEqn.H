@@ -9,11 +9,22 @@ Info << "//******************************************************************//"
 Info << "--->> Start solving diffusion-dispersion equation (no reaction - concentration C) " << endl;
 
 //---------------------------------//
-//-- Variables
+//-- Variables and initialisation
 //---------------------------------//
-float time = mesh.time().value();
 size_t i;
 dimensionedScalar USMALL("",dimLength/dimTime,1e-36); // To avoid dividing by O in effective water diffusivity
+double dff=0;
+int imax=0;
+
+//-- Initialisation
+a=a*0;
+dC=0;
+mxC=0;
+sC=0;
+sC1=0;
+
+//- Time
+float time = mesh.time().value();
 
 //-- Source terms
 CSu=CSu*0;
@@ -21,6 +32,10 @@ CSp=CSp*0;
 
 //-- Water content
 thetaw=eps*sw;
+
+//-- Store previous solution
+C.storePrevIter();
+
 
 //---------------------------------//
 //-- Compute the effective water diffusivity
@@ -184,8 +199,6 @@ if (cellsCfix.size()>0)
 //---------------------------------//
 Info << "   - Solve the diffusion-dispersion equation for C... " << endl;
 
-C.storePrevIter();
-
 //-- Concentration equation
 fvScalarMatrix CEqn
 (
@@ -235,15 +248,7 @@ CEqn.solve();
 //-- Compute dC: deltaC
 //---------------------------------//
 //-- Removing negative value increase artifially the total
-
 Info << "   - Remove negative C and compensate mass... " << endl;
-double dff=0;
-int imax=0;
-a=a*0;
-dC=0;
-mxC=0;
-sC=0;
-sC1=0;
 
 //-- Removing negative C and compensating mass
 for (int i=0;i<ncell;i++) 

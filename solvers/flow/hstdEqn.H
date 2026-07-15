@@ -1,11 +1,11 @@
 /**********************************************/
-//-- Solve for steady h equation
+//-- Solve for steady head equation - variable h
 /**********************************************/
 
 Info << "\n\n//******************************************************************//" << endl;
-Info << "//* * * * * * * * SOLVE STEADY H EQUATION * * * * * * * * * * * * * //" << endl;
+Info << "//* * * * * * * * SOLVE STEADY HEAD EQUATION (h) * * * * * * * * * *//" << endl;
 Info << "//******************************************************************//" << endl;
-Info << "--->> Start solving the steady head equation (h) for flow " << endl;
+Info << "--->> Start solving steady head equation (h)..." << endl;
 
 //---------------------------------//
 //-- Variables
@@ -53,8 +53,8 @@ for (int ii = 0; ii < 50; ii++) // LM: why 50?
 				}
 				if (x < e && x > 0)
 				{
-					sw[nc] = pow(x, 2) / (4 * e) + x / 2 + e / 4;
-				} // same eq as in mdf USg (transport manual fg 21)
+					sw[nc] = pow(x, 2) / (4 * e) + x / 2 + e / 4; // OA: same eq as in mdf USg (transport manual fg 21). LM: ??
+				}
 				else if (x > 1 - e && x < 1)
 				{
 					sw[nc] = 1 - pow((1 - x), 2) / (4 * e) - (1 - x) / 2 - e / 4;
@@ -165,35 +165,34 @@ for (int ii = 0; ii < 50; ii++) // LM: why 50?
 		Info << "       ---- Recharge boundary condition " << endl;
 
 		int ibl, Rblok, nRblok;
-		if (ncell_row > 1)
+		if (ncell_row > 1) // case xsection
 		{
 			Rblok = ncell_row;
 			nRblok = ncell_col;
-		} // case xsection
-		else
+		}
+		else // 3d case
 		{
 			Rblok = ncell_lay;
 			nRblok = nlay;
-		} // 3d case
+		}
 
 		for (i = 0; i < cellsHrch.size(); i++)
 		{
 			i1 = cellsHrch[i];
+			//-- Search for the first confined layer from the top
 			for (ibl = 0; ibl < nRblok; ibl++)
-
 			{
 				nc = i1 - ibl * Rblok;
 				if (sw[nc] >= sw_max[nc])
 				{
 					break;
 				};
-			} // search for the first confined layer from the top
-			int ibl1 = max(0, ibl - 1); // ilay1 from top
+			}
+			int ibl1 = max(0, ibl - 1); // ibl1 from top
 			nc = i1 - ibl1 * Rblok;
 			if (hSu[nc] == 0)
 			{
-				hSu[nc] += cellsHrchData[i * 4 + 2] / mesh.V()[nc];
-				// injeciton of recharge in the lowest unconfined layer
+				hSu[nc] += cellsHrchData[i * 4 + 2] / mesh.V()[nc]; // injeciton of recharge in the lowest unconfined layer
 			}
 		}
 	}
@@ -201,9 +200,9 @@ for (int ii = 0; ii < 50; ii++) // LM: why 50?
 	//---------------------------------//
 	//-- Solve the steady head equation
 	//---------------------------------//
-	Info << "     -- Solve the steady head equation for h... " << endl;
+	Info << "     -- Solve the steady head equation (h)... " << endl;
 
-	//-- Steady equation
+	//-- Steady head equation
 	fvScalarMatrix hEqnStd
 	(
 		-fvm::laplacian(Mf, h) 
@@ -221,7 +220,7 @@ for (int ii = 0; ii < 50; ii++) // LM: why 50?
 	}
 
 	//-- Solve and Residual
-	residu = hEqnStd.solve().initialResidual();
+	residu = hEqnStd.solve().initialResidual(); // Solve
 	Info << "     -- Resiual:: " << residu
 		 << ", Relaxation factor:: " << a
 		 << ", Execution Time:: " << runTime.elapsedCpuTime() << " s"
@@ -241,5 +240,5 @@ for (int ii = 0; ii < 50; ii++) // LM: why 50?
 	Uw = fvc::reconstruct(phiw);
 }
 
-Info << "---<< End of solving the steady head equation (h) for flow." << endl;
+Info << "---<< End of solving steady head equation (h)." << endl;
 Info << "//******************************************************************//\n\n"<< endl;

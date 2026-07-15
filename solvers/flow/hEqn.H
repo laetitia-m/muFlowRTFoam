@@ -1,12 +1,12 @@
 /**********************************************/
-//-- Solve for pressure head equation
+//-- Solve for head equation - variable h
 //-- For confined and unconfined
 /**********************************************/
 
 Info << "\n\n//******************************************************************//" << endl;
-Info << "//* * SOLVE PRESSURE HEAD EQUATION h for confined and unconfined * * //" << endl;
+Info << "//* * * SOLVE HEAD EQUATION (h) for confined and/or unconfined * * *//" << endl;
 Info << "//******************************************************************//" << endl;
-Info << "--->> Start solving pressure head equation (h) " << endl;
+Info << "--->> Start solving head equation (h) for confined and/or unconfined..." << endl;
 
 /*
 Here we calculate the head equation for different conditions (confined, unconfined) the unsaturated is calculated in hpEqn,
@@ -57,8 +57,8 @@ if (flowType == 2) // unconfined
 			}
 			if (x < e && x > 0)
 			{
-				sw[nc] = pow(x, 2) / (4 * e) + x / 2 + e / 4;
-			} // same eq as in mdf USg (transport manual fg 21)
+				sw[nc] = pow(x, 2) / (4 * e) + x / 2 + e / 4; // OA: same eq as in mdf USg (transport manual fg 21). LM: ??
+			} 
 			else if (x > 1 - e && x < 1)
 			{
 				sw[nc] = 1 - pow((1 - x), 2) / (4 * e) - (1 - x) / 2 - e / 4;
@@ -243,14 +243,14 @@ if (cellsHrch.size() > 0)
 		}
 		
 		//-- Search for the first confined layer from the top
-		int ibl1 = max(0, ibl - 1); // ilay1 from top
+		int ibl1 = max(0, ibl - 1); // ibl1 from top
 		nc = i1 - ibl1 * Rblok;
 		clayRch[i] = nc;
 		qHrch[i] = cellsHrchData[i * 4 + 2];
 		if (hSu[nc] == 0)
 		{
 			hSu[nc] = qHrch[i] / mesh.V()[nc];
-		} // injeciton of recharge in the lowest unconfined layer only if no fix cond here
+		} // injection of recharge in the lowest unconfined layer only if no fix cond here
 	}
 }
 
@@ -306,11 +306,11 @@ if (coupling == 1)
 }
 
 //---------------------------------//
-//-- Solve the pressure head equation
+//-- Solve the head equation h
 //---------------------------------//
-Info << "   - Solve the pressure head equation for h... " << endl;
+Info << "   - Solve the head equation (h)... " << endl;
 
-//-- Pressure head equation
+//-- Head equation
 fvScalarMatrix hEqn
 (
 	stor *fvm::ddt(h) 
@@ -320,15 +320,20 @@ fvScalarMatrix hEqn
 );
 
 //-- Solve and Residual
-residu = hEqn.solve().initialResidual();
+residu = hEqn.solve().initialResidual(); // Solve
+
+Info << "     -- Resiual:: " << residu
+		<< ", Execution Time:: " << runTime.elapsedCpuTime() << " s"
+		<< endl;
 
 //---------------------------------//
 //-- Compute water fluxes, velocity and BCs
 //---------------------------------//
+Info << "   - Water fluxes and velocity computation... \n" << endl;
 phiw == (-Mf * fvc::snGrad(h)) * mesh.magSf(); // water fluxes
 Uw = fvc::reconstruct(phiw); // water velocity
 
-//-- Compute the fixed head, drain and GHB BCs
+//-- Recompute fluxes at boundaries for fixed, drain and GHB BCs
 volScalarField q1 = fvc::div(phiw);
 
 for (size_t i = 0; i < cellsHfix.size(); i++)
@@ -348,5 +353,5 @@ for (size_t i = 0; i < cellsHghb.size(); i++)
 	qHghb[i] = (hSu[i1] - h()[i1] * hSp[i1]) * mesh.V()[i1];
 }
 
-Info << "--->> End solving pressure head equation (h). " << endl;
+Info << "--->> End solving head equation (h) for confined and/or unconfined. " << endl;
 Info << "//******************************************************************//\n\n" << endl;

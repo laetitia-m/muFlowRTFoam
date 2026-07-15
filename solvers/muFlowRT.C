@@ -109,7 +109,6 @@ using namespace Foam;
 #include "plugins/plugin_H.H" //variables to be modified before the H equation
 #include "plugins/plugin_PS.H"
 #include "plugins/plugin_Cgi.H"
-// #include "transport/adaptiveReactiveDdtScheme.H" // new ddt solver to switch, bof added to matrix direclty
 
 //---------------------------------//
 //-- Variables initialisation

@@ -1,5 +1,5 @@
 /**********************************************/
-//-- Solve for diffusion-dispersion equation
+//-- Solve the diffusion-dispersion equation
 //-- For concentration C when no reaction
 /**********************************************/
 
@@ -278,7 +278,7 @@ Info<<"       ---- Mass computed with    negative value "<<sC<<endl;
 Info<<"       ---- Mass computed without negative value "<<sC1<<endl;
 Info<<"       ---- Ratio of mass "<< sC/(sC1+SMALL)<<" & Delta mass "<< sC-sC1<<endl;
 
-//- Ratio should be equalt to 1 if no mass added artificially
+//- Ratio should be equal to 1 if no mass added artificially
 C *= sC/(sC1+SMALL);
 dC = dC/(mxC+SMALL);
 

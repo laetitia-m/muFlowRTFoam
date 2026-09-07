@@ -1,5 +1,5 @@
 /**********************************************/
-//-- Solve for diffusion-dispersion equation
+//-- Solve the diffusion-dispersion equation
 //-- For concentration of components in water
 //-- Cwi with reactive transport
 /**********************************************/

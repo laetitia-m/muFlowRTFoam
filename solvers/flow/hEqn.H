@@ -1,5 +1,5 @@
 /**********************************************/
-//-- Solve for head equation - variable h
+//-- Solve the head equation - variable h
 //-- For confined and unconfined
 /**********************************************/
 

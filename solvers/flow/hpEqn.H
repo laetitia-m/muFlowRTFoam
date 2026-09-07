@@ -1,5 +1,5 @@
 /**********************************************/
-//-- Solve for head equation - variable hp
+//-- Solve the head equation - variable hp
 //-- For unsaturated
 /**********************************************/
 

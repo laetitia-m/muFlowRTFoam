@@ -1,5 +1,5 @@
 /**********************************************/
-//-- Solve for saturation-pressure equation
+//-- Solve the saturation-pressure equation
 //-- Variable p and sw
 //-- For two phase flow
 /**********************************************/
@@ -207,7 +207,7 @@ phig == phi - phiw;
 volScalarField q1 = fvc::div(phiw);
 
 //-- Recompute fluxes at boundaries for fixed BCs
-for (i = 0; i < cellsPfix.size(); i++)
+for (size_t i = 0; i < cellsPfix.size(); i++)
 {
 	i1 = cellsPfix[i];
 	qPfix[i] = q1[i1] * mesh.V()[i1];

@@ -114,7 +114,6 @@ forAll(stor(), celli)
 };
 stor.dimensions().reset(dimless / dimLength);
 
-<<<<<<< HEAD
 //---------------------------------//
 //-- Boundary conditions
 //---------------------------------//

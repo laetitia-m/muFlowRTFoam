@@ -45,7 +45,6 @@ Developers
 #include <iterator>
 #include <sstream>
 #include <string>
-<<<<<<< HEAD
 #include <chrono> // for high_resolution_clock
 
 /*******************/
@@ -134,28 +133,20 @@ int rSteps=1;
 
 int main(int argc, char *argv[])
 {
-<<<<<<< HEAD
 
-    my_phq freak;
+	my_phq freak;
+
+	#if OPENFOAM >= 230000
+		#define TIME_NAME(t) (t).name()
+	#else
+		#define TIME_NAME(t) (t).timeName()
+	#endif
 
 	//-- OpenFOAM init
 	#include "setRootCase.H" //-- Process the command-line arguments + determine root and case directories
 		
     //-- Init mesh and time
 	#include "createTime.H"
-=======
-	my_phq freak; 
-	
-	#if OPENFOAM >= 230000
-		#define TIME_NAME(t) (t).name()
-	#else
-		#define TIME_NAME(t) (t).timeName()
-	#endif
-	
-	//init openFoam
-	#include "setRootCase.H"
-    #include "createTime.H"
->>>>>>> main
     #include "createMesh.H"
 
 	//-- Create fields
@@ -431,23 +422,14 @@ int main(int argc, char *argv[])
 
 	//-- Run the steady state for hp
 	dimensionedScalar st = runTime.startTime();
-	//dimensionedScalar et = runTime.endTime();
+	dimensionedScalar et = runTime.endTime();
 	float dt0 = mesh.time().deltaTValue();
 	scalar residu;
 	if ((flowStartSteady==1)&&(flowType>0)&&(flowType<=2))
 	{
 		runTime.setDeltaT(dt0);
 		#include "flow/hstdEqn.H"
-<<<<<<< HEAD
 	}
-=======
-		}
-	// ###################  starting timer ######################
-	Info <<"st time "<<st<<endl;
-	//runTime.setEndTime(et); Info<<"end "<<runTime.endTime()<<endl;
-	runTime.runTimeModifiable();
-	Info <<"dt "<<dt0<<endl;
->>>>>>> main
 	
 	//-- Starting timer
 	runTime.setEndTime(et); 
@@ -461,7 +443,10 @@ int main(int argc, char *argv[])
 	Info <<"st time "<<st<<endl;
 	Info <<"dt "<<dt0<<endl;
 
-	if (time<dt0) {runTime.setTime(dt0,0);} // not to have time=0, it hsould be  dt0
+	if (time<dt0) 
+	{
+		runTime.setTime(dt0,0);
+	} // not to have time=0, it hsould be  dt0
 
 	//-- Variables
 	int tstep,tcnt,rcnt,iflowStep;
@@ -556,45 +541,45 @@ int main(int argc, char *argv[])
 
 		if ((dt1==0)||(dt2==0)) 
 		{
-			if (dt1==0) {itwstep+=1;wtime=wTimes[itwstep];flagW=1;}
-<<<<<<< HEAD
-			if (dt2==0) {tnext=runTime.endTime().value();}
+			if (dt1==0) 
+			{
+				itwstep+=1;
+				wtime=wTimes[itwstep];
+				flagW=1;
+			}
+			if (dt2==0) 
+			{
+				// tnext=runTime.endTime().value();
+				tnext=readScalar(runTime.controlDict().lookup("endTime"));
+			}
 		}
 		else if ((dt1<= newDeltaT*(1+1e-5))&&(dt1==dt2)) //both BC and W
-		{ 
+		{
 			newDeltaT = min(newDeltaT/20,(wTimes[itwstep+1]-wTimes[itwstep])/100);
-			runTime.setDeltaTNoAdjust(dt1);tnext=runTime.endTime().value();
-=======
-			if (dt2==0) {tnext=readScalar(runTime.controlDict().lookup("endTime"));}
-		    }
-		else if ((dt1<= newDeltaT*(1+1e-5))&&(dt1==dt2)) //both BC and W
-			{newDeltaT = min(newDeltaT/20,(wTimes[itwstep+1]-wTimes[itwstep])/100);
-			runTime.setDeltaTNoAdjust(dt1);tnext=readScalar(runTime.controlDict().lookup("endTime"));
->>>>>>> main
-			itwstep+=1;wtime=wTimes[itwstep];
-			flagBC=1;flagW=1;
+			runTime.setDeltaTNoAdjust(dt1);
+			// tnext=runTime.endTime().value();
+			tnext=readScalar(runTime.controlDict().lookup("endTime"));
+			itwstep+=1;
+			wtime=wTimes[itwstep];
+			flagBC=1;
+			flagW=1;
 		}
 		else if ((dt1<=newDeltaT*(1+1e-5))&&(dt1>0)&&(dt1<dt2)) //write, 9/6 readd <
 		{ 
-			runTime.setDeltaTNoAdjust(dt1);itwstep+=1;wtime=wTimes[itwstep];
+			runTime.setDeltaTNoAdjust(dt1);
+			itwstep+=1;
+			wtime=wTimes[itwstep];
 			newDeltaT = dt1*0.99;
 			flagW=1;
-<<<<<<< HEAD
 		}
 		else if ((dt2<= newDeltaT*(1+1e-5))&&(dt2>0)&&(dt2<dt1)) //BC change //9/6 readd <
 		{
-			runTime.setDeltaTNoAdjust(dt2);tnext=runTime.endTime().value();
+			runTime.setDeltaTNoAdjust(dt2);
+			// tnext=runTime.endTime().value();
+			tnext=readScalar(runTime.controlDict().lookup("endTime"));
 			newDeltaT = min(newDeltaT/20,(wTimes[itwstep+1]-wTimes[itwstep])/100);
 			flagBC=1;
 		} 
-=======
-			}
-		else if ((dt2<= newDeltaT*(1+1e-5))&&(dt2>0)&&(dt2<dt1)) //BC change //9/6 readd < 
-			{runTime.setDeltaTNoAdjust(dt2);tnext=readScalar(runTime.controlDict().lookup("endTime"));
-			newDeltaT = min(newDeltaT/20,(wTimes[itwstep+1]-wTimes[itwstep])/100);
-			//flagDeltaT=1;
-			flagBC=1;} //;tnext=readScalar(runTime.controlDict().lookup("endTime"))
->>>>>>> main
 		Info<<" flgW "<<flagW<<" flgBC "<<flagBC<<endl;
 		
 		if (flagW+flagBC==0) {runTime.setDeltaT(newDeltaT);}// classical case
@@ -608,16 +593,7 @@ int main(int argc, char *argv[])
 		float dt = runTime.deltaTValue();
 		scalar reactStep = (wTimes[itwstep]-wTimes[itwstep-1])/rSteps; // length of the reaction step
 		Info <<"time = "<< mesh.time().value() <<" deltaT = " <<  dt << " tnext "<<tnext<<" newdeltaT "<<newDeltaT<<" reactStep "<<reactStep<<endl;
-<<<<<<< HEAD
 
-		//-- tsteps for reactions
-		if (rSteps<0) {if (tcnt>-rSteps-1) {tcnt=0;} }
-		if (rSteps>0) {if (rcnt>=rSteps) {rcnt=1;} }
-		int flgR =0;
-		if (rSteps>0) {if (runTime.value() >= wTimes[itwstep-1]+reactStep*rcnt) flgR=1;} // here the time to write is a portion of current time period
-		if (rSteps<0) {if (tcnt == -rSteps-1) flgR=1;} // here the time is a number of flow/transport time steps
-		Info<<"for react tcnt "<<tcnt<<" wtime "<<wTimes[itwstep-1]<<" lim "<<wTimes[itwstep-1]+reactStep*rcnt<<" rstep "<<rSteps<<" tcnt "<<tcnt<<" rcnt "<<rcnt<<" flgR "<<flgR<<endl;
-		
 		//---------------------------------//
 		//-- Solve coupling case
 		//---------------------------------//
@@ -625,10 +601,6 @@ int main(int argc, char *argv[])
 		int iterPicard;
 		float resPicard, residu0;
 
-=======
-		
-		//***********************  solve coupling case (we assume all coupling require h/C loop) *******************************
->>>>>>> main
 		if (coupling ==1) // we assume Picard
 		{
 			iterPicard = 0;
@@ -664,13 +636,8 @@ int main(int argc, char *argv[])
 				}
 			}  // end picard iter
 			Info << "Picard nb iterations : "<<iterPicard<<endl;
-<<<<<<< HEAD
-			tcnt++;
-			
-			if ((activateReaction==1)&&(flgR==1)) {
-=======
-			if (activateReaction==1) {
->>>>>>> main
+			if (activateReaction==1) 
+			{
 				#include "phreeqc/calcReaction.H"
 			}
 			
@@ -728,7 +695,6 @@ int main(int argc, char *argv[])
 			{
 				#include "transport/CEqn.H"
 			}
-<<<<<<< HEAD
 			else
 			{
 				forAll(Cw,i) {Cw[i]().storePrevIter();} // for cells outside calculation
@@ -737,58 +703,32 @@ int main(int argc, char *argv[])
 				{
 					forAll(Cg,i) {Cg[i]().storePrevIter();}
 					#include "transport/CgiEqn.H"
-=======
-		
-		if ((coupling ==0)&&(activateEK==0) && (activateTransport==1)) {
-			//if ((mesh.time().value()>=nextTimeTransp)||(iflowStep>20)) {
-				if (activateReaction==0) {
-					#include "transport/CEqn.H"
-					}
-				else { //reaction occurs
-					forAll(Cw,i) {Cw[i]().storePrevIter();} // for cells outside calculation
-					#include "transport/CwiEqn.H"
-					if (ph_gcomp>0) {
-						forAll(Cg,i) {Cg[i]().storePrevIter();}
-						#include "transport/CgiEqn.H"
-						}
-					#include "phreeqc/calcReaction.H"
-					}
-				/* for variable transp steps
-				iflowStep = 0;
-				nextTimeTransp = mesh.time().value()+min(dtForC/2.,maxDeltaT);
-				oldTimeTransp = runTime.value()*1;
-				std::cout<<"end trsp, pres "<<mesh.time().value()<<" next "<<nextTimeTransp<<"\n";
-				*/
->>>>>>> main
 				}
-				if (flgR) 
-				{
-					#include "phreeqc/calcReaction.H"
-				}
+				#include "phreeqc/calcReaction.H"
 			}
-			tcnt++;
 		}
 
 		#include "observation.H"
 		#include "budget.H"
-<<<<<<< HEAD
 
-		if (flagW==1) {runTime.writeNow();tcnt=0;rcnt=1;Info<<"l548, writing"<<endl;}
+		if (flagW==1) 
+		{
+			runTime.writeNow();
+			Info<<"l548, writing"<<endl;
+			if (rSteps>0) 
+			{
+				tcnt=0;
+				rcnt=1;
+			}
+		}
 
 		if (activateReaction==1  && flagW==1) 
 		{
-=======
-		
-		if (flagW==1) {runTime.writeNow();Info<<"l548, writing"<<endl;
-			if (rSteps>0) {tcnt=0;rcnt=1;}
-			}
-		
-		//if (flowType==4) {phiGr.write();}
-		if (activateReaction==1  && flagW==1) {
->>>>>>> main
-			phiw.write();phig.write();
+			phiw.write();
+			phig.write();
 			std::ofstream outFile(cur_dir/name(mesh.time().value())/"Species");
-			outFile.unsetf(std::ios::scientific);outFile.precision(6);
+			outFile.unsetf(std::ios::scientific);
+			outFile.precision(6);
 			std::cout<<"write nsel "<<nsel<<" nxyz "<<nxyz<<"\n";
 			for (j=0;j<nxyz;j++)
 				{ for (i=0;i<nsel;i++) {outFile << species[i*nxyz + j]<<" ";} outFile <<"\n"; }

@@ -46,13 +46,13 @@ volScalarField rhow (IOobject("rhow",TIME_NAME(mesh.time()),mesh,IOobject::READ_
 volScalarField muw (IOobject("muw",TIME_NAME(mesh.time()),mesh,IOobject::READ_IF_PRESENT,IOobject::NO_WRITE),mesh,muwRef);
 
 //--->> START:: Added by ZA
-volScalarField munew(IOobject("munew", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),mesh,muwRef);
+volScalarField munew(IOobject("munew", TIME_NAME(mesh.time()), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),mesh,muwRef);
 volScalarField gammad
 (
     IOobject
     (
         "gammad",
-        runTime.timeName(),
+        TIME_NAME(mesh.time()),
         mesh,
         IOobject::NO_READ,
         IOobject::AUTO_WRITE
@@ -72,7 +72,7 @@ volScalarField unity(IOobject("unity",runTime.constant(),mesh,IOobject::NO_READ,
 surfaceScalarField factMf(IOobject("factMf",TIME_NAME(mesh.time()),mesh,IOobject::NO_READ,IOobject::AUTO_WRITE),mesh,dimensionedScalar("zero", dimensionSet(0,0,0,0,0,0,0), 0.0));
 volScalarField Khor
 (
-    IOobject("Khor", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+    IOobject("Khor", TIME_NAME(mesh.time()), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
     mesh,
     dimensionedScalar("Khor", dimensionSet(0,0,0,0,0,0,0), 0.0)
 );

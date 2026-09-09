@@ -291,7 +291,7 @@ volScalarField factM
     IOobject
     (
         "factM",
-        runTime.timeName(),
+        TIME_NAME(mesh.time()),
         mesh,
         IOobject::NO_READ,
         IOobject::AUTO_WRITE
@@ -361,10 +361,40 @@ Umag.correctBoundaryConditions();
 gammad = (2.4*Umag)/sqrt(max(Kh*eps,dimensionedScalar("smallKeps",dimArea,SMALL)));
 gammad.correctBoundaryConditions();
 
-volScalarField factMout = plugH.corrM(mesh,freak);
-munew = muw/(factMout + dimensionedScalar("eps", factMout.dimensions(), SMALL));
+volScalarField factMout
+(
+    IOobject
+    (
+        "factMout",
+        TIME_NAME(mesh.time()),
+        mesh,
+        IOobject::NO_READ,
+        IOobject::AUTO_WRITE
+    ),
+    plugH.corrM(mesh, freak)
+);
 
+munew = muw/(factMout + dimensionedScalar("eps", factMout.dimensions(), SMALL));
 munew.correctBoundaryConditions();
+
+volScalarField etaCheck
+(
+    IOobject
+    (
+        "etaCheck",
+        TIME_NAME(mesh.time()),
+        mesh,
+        IOobject::NO_READ,
+        IOobject::AUTO_WRITE
+    ),
+    munew
+);
+
+Info<< "DEBUG muw min/max " << gMin(muw) << " " << gMax(muw)
+    << " factMout min/max " << gMin(factMout) << " " << gMax(factMout)
+    << " munew min/max " << gMin(munew) << " " << gMax(munew)
+    << endl;
+
 //<<-- Added by ZA:: END
 
 //-- Recompute fluxes at boundaries for fixed, drain and GHB BCs

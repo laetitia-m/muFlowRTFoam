@@ -44,11 +44,39 @@ volScalarField p (IOobject("p",TIME_NAME(mesh.time()),mesh,IOobject::READ_IF_PRE
 //Info<<p<<endl;
 volScalarField rhow (IOobject("rhow",TIME_NAME(mesh.time()),mesh,IOobject::READ_IF_PRESENT,IOobject::NO_WRITE),mesh,rhowRef);
 volScalarField muw (IOobject("muw",TIME_NAME(mesh.time()),mesh,IOobject::READ_IF_PRESENT,IOobject::NO_WRITE),mesh,muwRef);
+
+//--->> START:: Added by ZA
+volScalarField munew(IOobject("munew", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),mesh,muwRef);
+volScalarField gammad
+(
+    IOobject
+    (
+        "gammad",
+        runTime.timeName(),
+        mesh,
+        IOobject::NO_READ,
+        IOobject::AUTO_WRITE
+    ),
+    mesh,
+    dimensionedScalar("gammad", dimensionSet(0,0,-1,0,0,0,0), 0.0)
+);
+//<<-- Added by ZA:: END
+
 volScalarField sw (IOobject("sw",TIME_NAME(mesh.time()),mesh,IOobject::READ_IF_PRESENT,IOobject::AUTO_WRITE),mesh,dimensionedScalar("sw",dimless,1.));
 volScalarField sw1 = sw;
 volScalarField sw_tmp = sw;
 volScalarField phreeqcVm (IOobject("phreeqcVm",runTime.constant(),mesh,IOobject::READ_IF_PRESENT,IOobject::NO_WRITE),mesh,dimensionedScalar("phreeqcVm",dimless,24.5));
 volScalarField unity(IOobject("unity",runTime.constant(),mesh,IOobject::NO_READ,IOobject::NO_WRITE),mesh,dimensionedScalar("unity",dimless,1.));
+
+//--->> START:: Added by ZA
+surfaceScalarField factMf(IOobject("factMf",TIME_NAME(mesh.time()),mesh,IOobject::NO_READ,IOobject::AUTO_WRITE),mesh,dimensionedScalar("zero", dimensionSet(0,0,0,0,0,0,0), 0.0));
+volScalarField Khor
+(
+    IOobject("Khor", runTime.timeName(), mesh, IOobject::NO_READ, IOobject::AUTO_WRITE),
+    mesh,
+    dimensionedScalar("Khor", dimensionSet(0,0,0,0,0,0,0), 0.0)
+);
+//<<-- Added by ZA:: END
 
 volScalarField a("a",unity);
 a.dimensions().reset(dimMass/dimVolume); //for C
@@ -72,7 +100,12 @@ Info<<"CFL "<<CFL<<" int "<<CFLint<<endl;
 volScalarField stor("stor", unity); //Info << "stor " << stor().size() << endl;
 
 volVectorField Uw(IOobject("Uw",TIME_NAME(mesh.time()),mesh,IOobject::READ_IF_PRESENT,IOobject::AUTO_WRITE),mesh,dimensionedVector("Uw",dimLength/dimTime,vector::zero));
-volScalarField magUw("magUw",mag(Uw));
+
+//--->> START:: Added by ZA
+// volScalarField magUw("magUw",mag(Uw));
+volScalarField Umag(IOobject("Umag",TIME_NAME(mesh.time()),mesh,IOobject::NO_READ,IOobject::AUTO_WRITE),mag(Uw));
+//<<-- Added by ZA:: END
+
 surfaceScalarField phiw(IOobject("phiw",TIME_NAME(mesh.time()),mesh,IOobject::READ_IF_PRESENT,IOobject::AUTO_WRITE),mesh,dimensionedScalar("phiw",dimVolume/dimTime,0.));
 
 //hydraulic conductivity

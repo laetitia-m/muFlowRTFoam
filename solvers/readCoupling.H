@@ -11,6 +11,11 @@ if (fexists(fname))
 	std::ifstream if0(fname);//std::cout<<"file exist \n";
 	// read by keywords
 	std::string Ykey,Xvar,ftype;
+
+	//--->> START:: Added by ZA
+	std::string Xvar2,Xvar3;
+	//<<-- Added by ZA:: END
+
 	int nb;
 	float Xref,aa;
 	std::vector<float> fparms;
@@ -24,6 +29,10 @@ if (fexists(fname))
 		std::istringstream il0(line);
 		il0 >> Ykey;data.setYkey(Ykey);// name of the y var
 		il0 >> Xvar;data.setXvar(Xvar); // name of the x variable
+		//--->> START:: Added by ZA
+		il0 >> Xvar2;data.setXvar2(Xvar2);
+		il0 >> Xvar3;data.setXvar3(Xvar3);
+		//<<-- Added by ZA:: END
 		il0 >> Xref;data.setXref(Xref);// the reference value for x
 		il0 >> ftype;data.setType(ftype); // type of function
 		il0 >> nb; // number of parameters

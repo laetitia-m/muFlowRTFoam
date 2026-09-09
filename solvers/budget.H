@@ -15,6 +15,35 @@ float sq[11] = {mesh.time().value(),sqIHfix,sqOHfix,sqIHwel,sqOHwel,sqIHdrn,sqOH
 budFlow.insert(budFlow.end(), sq, sq+11);
 //std::cout<<"end budget flow \n";
 
+//--->> START:: Added by ZA
+scalar sumQin = 0;
+scalar sumQout = 0;
+
+for (i=0; i<cellsHwel.size(); i++) 
+{
+    if (qHwel[i] > 0)
+    {
+        sqIHwel += qHwel[i]*dt;
+        sumQin += qHwel[i];
+    }
+    else
+    {
+        sqOHwel += qHwel[i]*dt;
+        sumQout += qHwel[i];
+    }
+}
+
+Info<<"CHECK WEL volume: time "<<mesh.time().value()
+    <<" dt "<<dt
+    <<" sumQin "<<sumQin
+    <<" Qin*dt "<<sumQin*dt
+    <<" sqIHwel "<<sqIHwel
+    <<" sumQout "<<sumQout
+    <<" Qout*dt "<<sumQout*dt
+    <<" sqOHwel "<<sqOHwel
+    <<endl;
+//<<-- Added by ZA:: END
+
 float a;
 //std::cout<<"act trp "<<activateTransport<<"\n";
 if ((activateTransport==1)&&(activateReaction==0))

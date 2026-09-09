@@ -279,6 +279,22 @@ if (cellsHfix.size() > 0)
 //-- For coupling, compute the multiplying factors
 //---------------------------------//
 //-- Get the multiplying factors from plugin_H
+
+//--->> START:: Added by ZA
+volScalarField factM
+(
+    IOobject
+    (
+        "factM",
+        runTime.timeName(),
+        mesh,
+        IOobject::NO_READ,
+        IOobject::AUTO_WRITE
+    ),
+    plugH.corrM(mesh, freak)
+);
+//<<-- Added by ZA:: END
+
 if (coupling == 1)
 {
 	volScalarField factM = plugH.corrM(mesh, freak);
@@ -332,6 +348,14 @@ Info << "     -- Resiual:: " << residu
 Info << "   - Water fluxes and velocity computation... \n" << endl;
 phiw == (-Mf * fvc::snGrad(h)) * mesh.magSf(); // water fluxes
 Uw = fvc::reconstruct(phiw); // water velocity
+
+//--->> START:: Added by ZA
+Umag = mag(Uw);
+Umag.correctBoundaryConditions();
+munew = muw/factM;
+munew.correctBoundaryConditions();
+gammad = (2.4*Umag)/sqrt(Kh*eps);
+//<<-- Added by ZA:: END
 
 //-- Recompute fluxes at boundaries for fixed, drain and GHB BCs
 volScalarField q1 = fvc::div(phiw);

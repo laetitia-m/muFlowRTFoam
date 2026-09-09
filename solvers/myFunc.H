@@ -4,6 +4,10 @@ class dicFunc
 	public:
 	std::string Ykey; void setYkey(std::string Ykey){this->Ykey = Ykey;}	
 	std::string Xvar; void setXvar(std::string Xvar){this->Xvar = Xvar;}
+	//--->> START:: Added by ZA
+	std::string Xvar2; void setXvar2(std::string Xvar2){this->Xvar2 = Xvar2;}
+	std::string Xvar3; void setXvar3(std::string Xvar3){this->Xvar3 = Xvar3;}
+	//<<-- Added by ZA:: END
 	std::string type; void setType(std::string type){this->type = type;}
 	float Xref; void setXref(float Xref){this->Xref = Xref;}
 	std::vector<float> fparms; void setParms(std::vector<float> fparms){this->fparms = fparms;}
@@ -12,12 +16,20 @@ class dicFunc
 //this is the calculation of the value of the multiplying factor from a function
 // it returns a vector of multiplygin factors given the value of fvar
 // the first paramaters is the reference
-volScalarField calcFunc(fvMesh & mesh, std::string ftype, Foam::volScalarField fvar, float Xref, std::vector<float> fparms)
+//--->> START:: Added by ZA
+volScalarField calcFunc(fvMesh & mesh, std::string ftype, Foam::volScalarField fvar,Foam::volScalarField fvar2,Foam::volScalarField fvar3, float Xref, std::vector<float> fparms)
+//<<-- Added by ZA:: END
+// volScalarField calcFunc(fvMesh & mesh, std::string ftype, Foam::volScalarField fvar, float Xref, std::vector<float> fparms)
 {
 	//volScalarField resu; 
 	volScalarField fact = fvar*0.0;
 	fact.dimensions().reset(dimless);
 	fvar.dimensions().reset(dimless);
+	//--->> START:: Added by ZA
+	fvar2.dimensions().reset(dimless);
+	fvar3.dimensions().reset(dimless);
+	//fvar4.dimensions().reset.(dimless);
+	//<<-- Added by ZA:: END
 		/*int i;
 		int n = fvar.size();//Info<<"in func n "<<n<<" type "<<ftype<<endl;
 		resu.resize(n);*/
@@ -39,6 +51,27 @@ volScalarField calcFunc(fvMesh & mesh, std::string ftype, Foam::volScalarField f
 			fact = 1.+ fparms[0]*exp(fparms[1]*(fvar-Xref)) ;
 			Info<<"in calc func, fvar "<<fvar[0]<<" fparm "<<fparms[0]<<" fact(4) "<<fact[4]<<endl;
 			}
+		//--->> START:: Added by ZA
+		if (ftype == "power")
+			{
+				Info<< "fvar dims " << fvar.dimensions()  << " min/max " << gMin(fvar)  << " " << gMax(fvar)  << nl;
+				Info<< "fvar2 dims "        << fvar2.dimensions() << " min/max " << gMin(fvar2) << " " << gMax(fvar2) << nl;
+				Info<< "fvar2 dims "        << fvar3.dimensions() << " min/max " << gMin(fvar3) << " " << gMax(fvar3) << nl;
+				volScalarField eps = mesh.objectRegistry::lookupObject<volScalarField>("eps");
+				volScalarField Ceff = max(fvar, SMALL);Info<< "Ceff min/max " << gMin(Ceff) << " " << gMax(Ceff) << endl;
+				volScalarField G = (2.4*max(fvar2,scalar(1e-24))/max(sqrt(fvar3*eps), scalar(1e-24)));
+				volScalarField A = (0.315 * Ceff + 0.001)*pow(G, - 0.0915 * log(1.0 + 1240.0 * Ceff));
+				volScalarField B = (0.539 * Ceff + 0.001);
+				volScalarField D = min(B, max(0.001, A));
+				Info<< "G min/max " << gMin(G) << " " << gMax(G) << endl;
+				Info<< "A min/max " << gMin(A) << " " << gMax(A) << endl;
+				Info<< "B min/max " << gMin(B) << " " << gMax(B) << endl;
+				Info<< "D min/max " << gMin(D) << " " << gMax(D) << endl;
+				fact = D/0.001;
+				fact.correctBoundaryConditions();
+				Info << "fact min/max " << gMin(fact) << " " << gMax(fact) << endl;
+			}
+		//<<-- Added by ZA:: END
 		if (ftype=="kozeny") // kozeny F=eps^3/(1-eps^2), with the initial being 
 			{
 			volScalarField eps0 = mesh.objectRegistry::lookupObject<volScalarField>("eps0");  //Xvar is the name of the variable

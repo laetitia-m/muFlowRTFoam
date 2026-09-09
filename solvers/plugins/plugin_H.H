@@ -33,6 +33,12 @@ public:
 		for (size_t i=0;i<listCouples.size();i++) {
 			std::cout<<"cpl key "<<listCouples[i].Ykey<<" type "<< listCouples[i].type <<"\n";
 			volScalarField X = mesh.objectRegistry::lookupObject<volScalarField>(listCouples[i].Xvar);  //Xvar is the name of the variable
+
+			//--->> START:: Added by ZA
+			volScalarField X2 = mesh.objectRegistry::lookupObject<volScalarField>(listCouples[i].Xvar2);  //Xvar is the name of the variable
+			volScalarField X3 = mesh.objectRegistry::lookupObject<volScalarField>(listCouples[i].Xvar3);
+			//<<-- Added by ZA:: END
+
 			if (listCouples[i].Xvar=="eps") 
 				{
 				volScalarField eps0 = mesh.objectRegistry::lookupObject<volScalarField>("eps0");  
@@ -41,10 +47,16 @@ public:
 				X = eps*1;
 				} 
 			if ((listCouples[i].Ykey=="rhow")||(listCouples[i].Ykey=="K"))
-				{fact *= calcFunc(mesh,listCouples[i].type,X,listCouples[i].Xref,listCouples[i].fparms);}
-			if (listCouples[i].Ykey=="muw") 
-				{fact = 1.0/calcFunc(mesh,listCouples[i].type,X,listCouples[i].Xref,listCouples[i].fparms);}
-			if (listCouples[i].Ykey=="muShear") 
+				//--->> START:: Added by ZA
+				{fact *= calcFunc(mesh,listCouples[i].type,X,X2, X3,listCouples[i].Xref, listCouples[i].fparms);}
+				// {fact *= calcFunc(mesh,listCouples[i].type,X,listCouples[i].Xref,listCouples[i].fparms);}
+				//<<-- Added by ZA:: END
+				if (listCouples[i].Ykey=="muw")
+				//--->> START:: Added by ZA
+				{fact /=calcFunc(mesh,listCouples[i].type,X,X2,X3,listCouples[i].Xref, listCouples[i].fparms);}
+				// {fact = 1.0/calcFunc(mesh,listCouples[i].type,X,listCouples[i].Xref,listCouples[i].fparms);}
+				//<<-- Added by ZA:: END
+				if (listCouples[i].Ykey=="muShear") 
 				{fact = 1.0/calcFunc2(mesh,listCouples[i].type,X,mUw,listCouples[i].Xref,listCouples[i].fparms,tunits);}
 		}
 		

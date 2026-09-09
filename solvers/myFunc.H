@@ -51,6 +51,7 @@ volScalarField calcFunc(fvMesh & mesh, std::string ftype, Foam::volScalarField f
 			fact = 1.+ fparms[0]*exp(fparms[1]*(fvar-Xref)) ;
 			Info<<"in calc func, fvar "<<fvar[0]<<" fparm "<<fparms[0]<<" fact(4) "<<fact[4]<<endl;
 			}
+			
 		//--->> START:: Added by ZA
 		if (ftype == "power")
 			{
@@ -71,7 +72,43 @@ volScalarField calcFunc(fvMesh & mesh, std::string ftype, Foam::volScalarField f
 				fact.correctBoundaryConditions();
 				Info << "fact min/max " << gMin(fact) << " " << gMax(fact) << endl;
 			}
+		if (ftype == "Antonio")
+			{
+			if (fparms.size() != 6)
+				{
+				FatalErrorIn("calcFunc")
+					<< "required 6 coefficients: "
+					<< "k0 k1 dn cN mu1 mu2"
+					<< exit(FatalError);
+				}
+                        volScalarField eps = mesh.objectRegistry::lookupObject<volScalarField>("eps");
+			volScalarField G = (2.4*max(fvar2,scalar(1e-24))/max(sqrt(fvar3*eps), scalar(1e-24)));
+			volScalarField Ceff = max(fvar, SMALL);Info<< "Ceff min/max " << gMin(Ceff) << " " << gMax(Ceff) << endl;
+			volScalarField gammaEff = G;
+			gammaEff.dimensions().reset(dimless);
+			gammaEff = max(gammaEff, SMALL);
+
+			scalar k0 = fparms[0];
+			scalar k1 = fparms[1];
+			scalar dn = fparms[2];
+			scalar cN = max(fparms[3], scalar(SMALL));
+			scalar mu1 = fparms[4];
+			scalar mu2 = fparms[5];
+
+			volScalarField k = k0 + k1*Ceff;
+			volScalarField n = 1.0 - dn*log(1.0 + Ceff/cN);
+			volScalarField muInf = 0.001 + mu1*(exp(min(mu2*Ceff, 50.0)) - 1.0);
+			volScalarField eta = k*pow(gammaEff, n-1.0) + muInf;
+
+			fact = max(eta/0.001, SMALL);
+			fact.correctBoundaryConditions();
+			Info<<"Antonio C min/max "<<gMin(Ceff)<<" "<<gMax(Ceff)
+				<<" G min/max "<<gMin(G)<<" "<<gMax(G)
+				<<" eta min/max "<<gMin(eta)<<" "<<gMax(eta)
+				<<" fact min/max "<<gMin(fact)<<" "<<gMax(fact)<<endl;
+			}
 		//<<-- Added by ZA:: END
+
 		if (ftype=="kozeny") // kozeny F=eps^3/(1-eps^2), with the initial being 
 			{
 			volScalarField eps0 = mesh.objectRegistry::lookupObject<volScalarField>("eps0");  //Xvar is the name of the variable

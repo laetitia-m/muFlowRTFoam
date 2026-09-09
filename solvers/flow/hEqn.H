@@ -281,6 +281,11 @@ if (cellsHfix.size() > 0)
 //-- Get the multiplying factors from plugin_H
 
 //--->> START:: Added by ZA
+Umag = mag(Uw);
+Umag.correctBoundaryConditions();
+gammad = (2.4*Umag)/sqrt(max(Kh*eps,dimensionedScalar("smallKeps",dimArea,SMALL)));
+gammad.correctBoundaryConditions();
+
 volScalarField factM
 (
     IOobject
@@ -352,9 +357,14 @@ Uw = fvc::reconstruct(phiw); // water velocity
 //--->> START:: Added by ZA
 Umag = mag(Uw);
 Umag.correctBoundaryConditions();
-munew = muw/factM;
+
+gammad = (2.4*Umag)/sqrt(max(Kh*eps,dimensionedScalar("smallKeps",dimArea,SMALL)));
+gammad.correctBoundaryConditions();
+
+volScalarField factMout = plugH.corrM(mesh,freak);
+munew = muw/(factMout + dimensionedScalar("eps", factMout.dimensions(), SMALL));
+
 munew.correctBoundaryConditions();
-gammad = (2.4*Umag)/sqrt(Kh*eps);
 //<<-- Added by ZA:: END
 
 //-- Recompute fluxes at boundaries for fixed, drain and GHB BCs

@@ -48,7 +48,7 @@ alpha_tens2.value().yy()= 0.;
 dimensionedTensor alpha_tens3("alpha_tens3",dimLength, aaTV * tensor::I);
 alpha_tens3.value().zz()= 0.;
 Info<<"alp tensors "<<alpha_tens1<<" "<<alpha_tens2<<" "<<alpha_tens3;
-volTensorField Deffw(IOobject("Deffw",TIME_NAME(mesh.time()),mesh,IOobject::READ_IF_PRESENT,IOobject::NO_WRITE),mesh,dimensionedTensor("Deffw",dimArea/dimTime,Zero) );
+volTensorField Deffw(IOobject("Deffw",TIME_NAME(mesh.time()),mesh,IOobject::READ_IF_PRESENT,IOobject::AUTO_WRITE),mesh,dimensionedTensor("Deffw",dimArea/dimTime,Zero) );
 
 // creating the internal Su and Sp fields to input temperature conditions inside the domain
 volScalarField::Internal CSu

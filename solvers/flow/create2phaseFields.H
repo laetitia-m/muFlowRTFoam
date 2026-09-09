@@ -33,7 +33,7 @@ volVectorField Ug
     IOobject
 	(
 		"Ug",
-		runTime.timeName(),
+		TIME_NAME(mesh.time()),
 		mesh,
 		IOobject::READ_IF_PRESENT,
 		IOobject::AUTO_WRITE
@@ -62,7 +62,7 @@ volScalarField sg
 	IOobject
 	(
 		"sg",
-		runTime.timeName(),
+		TIME_NAME(mesh.time()),
 		mesh,
 		IOobject::READ_IF_PRESENT,
 		IOobject::AUTO_WRITE
@@ -187,7 +187,7 @@ volScalarField::Internal pSu
    IOobject
    (
 		"pSu",
-		runTime.timeName(),
+		TIME_NAME(mesh.time()),
 		mesh,
 		IOobject::NO_READ,
 		IOobject::NO_WRITE
@@ -202,7 +202,7 @@ volScalarField::Internal fSu
 (
    IOobject(
 		"fSu",
-		runTime.timeName(),
+		TIME_NAME(mesh.time()),
 		mesh,
 		IOobject::NO_READ,
 		IOobject::NO_WRITE

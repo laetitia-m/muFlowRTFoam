@@ -45,6 +45,7 @@ Developers
 #include <iterator>
 #include <sstream>
 #include <string>
+<<<<<<< HEAD
 #include <chrono> // for high_resolution_clock
 
 /*******************/
@@ -73,8 +74,12 @@ Developers
 
 //-- Other OpenFOAM headers
 #include "fvSchemes.H"
+#include "IOdictionary.H"
+#include "fvPatchFields.H"
+#include "foamVersion.H"
 #include "inletOutletFvPatchField.H"
 #include "volFields.H"
+#include "surfaceFields.H"
 #include "fvPatchFieldMapper.H"
 #include "simpleControl.H"
 #include "cellSet.H"
@@ -129,6 +134,7 @@ int rSteps=1;
 
 int main(int argc, char *argv[])
 {
+<<<<<<< HEAD
 
     my_phq freak;
 
@@ -137,6 +143,19 @@ int main(int argc, char *argv[])
 		
     //-- Init mesh and time
 	#include "createTime.H"
+=======
+	my_phq freak; 
+	
+	#if OPENFOAM >= 230000
+		#define TIME_NAME(t) (t).name()
+	#else
+		#define TIME_NAME(t) (t).timeName()
+	#endif
+	
+	//init openFoam
+	#include "setRootCase.H"
+    #include "createTime.H"
+>>>>>>> main
     #include "createMesh.H"
 
 	//-- Create fields
@@ -412,14 +431,23 @@ int main(int argc, char *argv[])
 
 	//-- Run the steady state for hp
 	dimensionedScalar st = runTime.startTime();
-	dimensionedScalar et = runTime.endTime();
+	//dimensionedScalar et = runTime.endTime();
 	float dt0 = mesh.time().deltaTValue();
 	scalar residu;
 	if ((flowStartSteady==1)&&(flowType>0)&&(flowType<=2))
 	{
 		runTime.setDeltaT(dt0);
 		#include "flow/hstdEqn.H"
+<<<<<<< HEAD
 	}
+=======
+		}
+	// ###################  starting timer ######################
+	Info <<"st time "<<st<<endl;
+	//runTime.setEndTime(et); Info<<"end "<<runTime.endTime()<<endl;
+	runTime.runTimeModifiable();
+	Info <<"dt "<<dt0<<endl;
+>>>>>>> main
 	
 	//-- Starting timer
 	runTime.setEndTime(et); 
@@ -524,17 +552,25 @@ int main(int argc, char *argv[])
 		if (flagBC>0) {newDeltaT = min(newDeltaT,dt2/20);flagBC=0;} // usefull?
 		
 		newDeltaT = min(max(newDeltaT,minDeltaT),maxDeltaT);
-		Info<<"dts : min "<<minDeltaT<<" tnext "<<tnext<<" new "<<newDeltaT<<endl;
+		Info<<"dts : min "<<minDeltaT<<" tnext "<<tnext<<" new "<<newDeltaT<<" oldtReac "<<oldTimeReac<<endl;
 
 		if ((dt1==0)||(dt2==0)) 
 		{
 			if (dt1==0) {itwstep+=1;wtime=wTimes[itwstep];flagW=1;}
+<<<<<<< HEAD
 			if (dt2==0) {tnext=runTime.endTime().value();}
 		}
 		else if ((dt1<= newDeltaT*(1+1e-5))&&(dt1==dt2)) //both BC and W
 		{ 
 			newDeltaT = min(newDeltaT/20,(wTimes[itwstep+1]-wTimes[itwstep])/100);
 			runTime.setDeltaTNoAdjust(dt1);tnext=runTime.endTime().value();
+=======
+			if (dt2==0) {tnext=readScalar(runTime.controlDict().lookup("endTime"));}
+		    }
+		else if ((dt1<= newDeltaT*(1+1e-5))&&(dt1==dt2)) //both BC and W
+			{newDeltaT = min(newDeltaT/20,(wTimes[itwstep+1]-wTimes[itwstep])/100);
+			runTime.setDeltaTNoAdjust(dt1);tnext=readScalar(runTime.controlDict().lookup("endTime"));
+>>>>>>> main
 			itwstep+=1;wtime=wTimes[itwstep];
 			flagBC=1;flagW=1;
 		}
@@ -543,6 +579,7 @@ int main(int argc, char *argv[])
 			runTime.setDeltaTNoAdjust(dt1);itwstep+=1;wtime=wTimes[itwstep];
 			newDeltaT = dt1*0.99;
 			flagW=1;
+<<<<<<< HEAD
 		}
 		else if ((dt2<= newDeltaT*(1+1e-5))&&(dt2>0)&&(dt2<dt1)) //BC change //9/6 readd <
 		{
@@ -550,15 +587,28 @@ int main(int argc, char *argv[])
 			newDeltaT = min(newDeltaT/20,(wTimes[itwstep+1]-wTimes[itwstep])/100);
 			flagBC=1;
 		} 
+=======
+			}
+		else if ((dt2<= newDeltaT*(1+1e-5))&&(dt2>0)&&(dt2<dt1)) //BC change //9/6 readd < 
+			{runTime.setDeltaTNoAdjust(dt2);tnext=readScalar(runTime.controlDict().lookup("endTime"));
+			newDeltaT = min(newDeltaT/20,(wTimes[itwstep+1]-wTimes[itwstep])/100);
+			//flagDeltaT=1;
+			flagBC=1;} //;tnext=readScalar(runTime.controlDict().lookup("endTime"))
+>>>>>>> main
 		Info<<" flgW "<<flagW<<" flgBC "<<flagBC<<endl;
 		
 		if (flagW+flagBC==0) {runTime.setDeltaT(newDeltaT);}// classical case
 		Info<<"i time "<<itwstep<<" oldt "<<presentTime<<" wt "<<wtime<<" deltaT "<<float(runTime.deltaTValue())<<" flgW "<<flagW<<endl;
-		runTime.read();
-		runTime++;tstep++;
+		#if defined(OPENFOAM) && (OPENFOAM <= 100)
+			// Ce code est lu et compilé UNIQUEMENT sur OpenFOAM v10 (ou inférieur)
+			runTime.read();
+		#endif
+		runTime++;tstep++;tcnt++;
+
 		float dt = runTime.deltaTValue();
 		scalar reactStep = (wTimes[itwstep]-wTimes[itwstep-1])/rSteps; // length of the reaction step
 		Info <<"time = "<< mesh.time().value() <<" deltaT = " <<  dt << " tnext "<<tnext<<" newdeltaT "<<newDeltaT<<" reactStep "<<reactStep<<endl;
+<<<<<<< HEAD
 
 		//-- tsteps for reactions
 		if (rSteps<0) {if (tcnt>-rSteps-1) {tcnt=0;} }
@@ -575,6 +625,10 @@ int main(int argc, char *argv[])
 		int iterPicard;
 		float resPicard, residu0;
 
+=======
+		
+		//***********************  solve coupling case (we assume all coupling require h/C loop) *******************************
+>>>>>>> main
 		if (coupling ==1) // we assume Picard
 		{
 			iterPicard = 0;
@@ -610,9 +664,13 @@ int main(int argc, char *argv[])
 				}
 			}  // end picard iter
 			Info << "Picard nb iterations : "<<iterPicard<<endl;
+<<<<<<< HEAD
 			tcnt++;
 			
 			if ((activateReaction==1)&&(flgR==1)) {
+=======
+			if (activateReaction==1) {
+>>>>>>> main
 				#include "phreeqc/calcReaction.H"
 			}
 			
@@ -670,6 +728,7 @@ int main(int argc, char *argv[])
 			{
 				#include "transport/CEqn.H"
 			}
+<<<<<<< HEAD
 			else
 			{
 				forAll(Cw,i) {Cw[i]().storePrevIter();} // for cells outside calculation
@@ -678,6 +737,29 @@ int main(int argc, char *argv[])
 				{
 					forAll(Cg,i) {Cg[i]().storePrevIter();}
 					#include "transport/CgiEqn.H"
+=======
+		
+		if ((coupling ==0)&&(activateEK==0) && (activateTransport==1)) {
+			//if ((mesh.time().value()>=nextTimeTransp)||(iflowStep>20)) {
+				if (activateReaction==0) {
+					#include "transport/CEqn.H"
+					}
+				else { //reaction occurs
+					forAll(Cw,i) {Cw[i]().storePrevIter();} // for cells outside calculation
+					#include "transport/CwiEqn.H"
+					if (ph_gcomp>0) {
+						forAll(Cg,i) {Cg[i]().storePrevIter();}
+						#include "transport/CgiEqn.H"
+						}
+					#include "phreeqc/calcReaction.H"
+					}
+				/* for variable transp steps
+				iflowStep = 0;
+				nextTimeTransp = mesh.time().value()+min(dtForC/2.,maxDeltaT);
+				oldTimeTransp = runTime.value()*1;
+				std::cout<<"end trsp, pres "<<mesh.time().value()<<" next "<<nextTimeTransp<<"\n";
+				*/
+>>>>>>> main
 				}
 				if (flgR) 
 				{
@@ -689,13 +771,23 @@ int main(int argc, char *argv[])
 
 		#include "observation.H"
 		#include "budget.H"
+<<<<<<< HEAD
 
 		if (flagW==1) {runTime.writeNow();tcnt=0;rcnt=1;Info<<"l548, writing"<<endl;}
 
 		if (activateReaction==1  && flagW==1) 
 		{
+=======
+		
+		if (flagW==1) {runTime.writeNow();Info<<"l548, writing"<<endl;
+			if (rSteps>0) {tcnt=0;rcnt=1;}
+			}
+		
+		//if (flowType==4) {phiGr.write();}
+		if (activateReaction==1  && flagW==1) {
+>>>>>>> main
 			phiw.write();phig.write();
-			std::ofstream outFile(cur_dir/runTime.timeName()/"Species");
+			std::ofstream outFile(cur_dir/name(mesh.time().value())/"Species");
 			outFile.unsetf(std::ios::scientific);outFile.precision(6);
 			std::cout<<"write nsel "<<nsel<<" nxyz "<<nxyz<<"\n";
 			for (j=0;j<nxyz;j++)

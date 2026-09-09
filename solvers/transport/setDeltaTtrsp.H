@@ -12,7 +12,7 @@ scalar dCmax_rel =
 //Info<< "dCm_a " << dCmax_abs << " dCm_r " << dCmax_rel << endl;
 
 //- C-variation control
-//dimensionedScalar dCmax(transportProperties.lookupOrDefault("dCmax",dimensionedScalar("dCmax",dimMass/dimVol,0.01)));
+//dimensionedScalar dCmax(transportProperties.lookupOrDefault("dCmax",dimensionedScalar("dCmax",dimMass/dimVolume,0.01)));
 //const scalar dCresidual = runTime.controlDict().lookupOrDefault("dCresidual", 1e-3);
 scalar maxDeltaT = runTime.controlDict().lookupOrDefault("maxDeltaT", GREAT);
 scalar dCmax = runTime.controlDict().lookupOrDefault("dCmax", 0.01);

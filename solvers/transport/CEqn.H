@@ -36,11 +36,15 @@ thetaw=eps*sw;
 //-- Store previous solution
 C.storePrevIter();
 
-
 //---------------------------------//
 //-- Compute the effective water diffusivity
 //---------------------------------//
-Deffw = (alphaT * mag(Uw) + Dw0* pow(thetaw,3.333) /pow(eps,2.))*tensor::I + (alphaL-alphaT) * (Uw*Uw)/(mag(Uw)+USMALL);
+volScalarField Uw_y = Uw.component(1);
+volScalarField Uw_z = Uw.component(2);
+// OA: !!! in eq below if a&b not in parentheses, there is a pb of dimensions !!!
+Deffw = ((sqr(Uw) & alpha_tens1) + sqr(Uw_y) * alpha_tens2 + sqr(Uw_z)* alpha_tens3)/(mag(Uw)+USMALL);
+Deffw = Deffw + Dw0* pow(thetaw,3.333) /pow(eps,2.)*tensor::I;
+// Deffw = (alphaT * mag(Uw) + Dw0* pow(thetaw,3.333) /pow(eps,2.))*tensor::I + (alphaL-alphaT) * (Uw*Uw)/(mag(Uw)+USMALL);
 Info << "   - Diffusivity: " << Dw0.value() << endl;
 Info << "   - Effective diffusivity matrix: " << Deffw[15] << endl;
 

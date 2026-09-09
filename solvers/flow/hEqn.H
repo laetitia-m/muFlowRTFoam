@@ -114,6 +114,7 @@ forAll(stor(), celli)
 };
 stor.dimensions().reset(dimless / dimLength);
 
+<<<<<<< HEAD
 //---------------------------------//
 //-- Boundary conditions
 //---------------------------------//
@@ -285,7 +286,7 @@ if (coupling == 1)
 	surfaceScalarField factMf = fvc::interpolate(factM, "factM");
 	Mf *= factMf;
 
-	//-- LM: the followinv seems to be only terminal output? Do we really need the following?
+	//-- LM: the following seems to be only terminal output? Do we really need the following?
 	for (int i = 0; i < 6; i++)
 	{
 		Info << factM[i] << " ";
@@ -293,7 +294,7 @@ if (coupling == 1)
 	if (flagW == 1)
 	{
 		std::cout << "in write cpl fact ??? " << "\n";
-		std::ofstream outFact(cur_dir / runTime.timeName() / "factM");
+		std::ofstream outFact(cur_dir / name(mesh.time().value()) / "factM");
 		outFact.unsetf(std::ios::scientific);
 		outFact.precision(6);
 		for (int j = 0; j < ncell; j++)

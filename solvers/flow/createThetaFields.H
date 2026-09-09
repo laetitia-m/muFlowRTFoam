@@ -13,7 +13,7 @@ volScalarField hp
     IOobject
 	(
 		"hp",
-		runTime.timeName(),
+		TIME_NAME(mesh.time()),
 		mesh,
 		IOobject::READ_IF_PRESENT,
 		IOobject::AUTO_WRITE

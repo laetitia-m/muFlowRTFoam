@@ -39,7 +39,7 @@ public:
 		volScalarField Rf = mesh.objectRegistry::lookupObject<volScalarField>("Rf");
 		if (this->Koci.size()>0) 
 			{
-			dimensionedScalar Koc1("Koc1",dimVol/dimMass,0);Koc1.value()=this->Koci[ic];
+			dimensionedScalar Koc1("Koc1",dimVolume/dimMass,0);Koc1.value()=this->Koci[ic];
 			std::cout<<"in plug ic "<<ic<<" koc "<<Koc1.value()<<"\n";
 			Rf = 1 + (1-eps)/eps*rhos*Koc1*foc;
 		
@@ -58,7 +58,7 @@ public:
 				Rf *= this->AW_b[ic]/R*(7.572e-2 - 1.515e-4*T)/(T+273.15)/(this->AW_a[ic]+Cwi*1000.+SMALL); //Surf tension in N/m, T in °C, Cw in mol/m3
 				Rf += rhos*(1-eps)*Koc1*foc;
 				Rf = 1+Rf/thetaw;
-				Cwi.dimensions().reset(dimMass/dimVol);
+				Cwi.dimensions().reset(dimMass/dimVolume);
 				T.dimensions().reset(dimensionSet(0,0,0,1,0,0,0));
 				}
 			}

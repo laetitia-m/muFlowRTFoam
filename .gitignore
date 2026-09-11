@@ -4,9 +4,9 @@ solvers/Make/linux64GccDPInt32Opt/muFlowRT.C.dep
 solvers/Make/linux64GccDPInt32Opt/muFlowRT.o
 solvers/Make/linux64GccDPInt32Opt/options
 solvers/Make/linux64GccDPInt32Opt/files
-<<<<<<< HEAD
 solvers/.vscode/
 solvers/misc*
 .vscode/
 muFlowRT_2310.docx
 .~FlowRT_2310.docx
+misc*

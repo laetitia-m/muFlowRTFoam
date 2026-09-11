@@ -17,9 +17,19 @@ class dicFunc
 // it returns a vector of multiplygin factors given the value of fvar
 // the first paramaters is the reference
 //--->> START:: Added by ZA
-volScalarField calcFunc(fvMesh & mesh, std::string ftype, Foam::volScalarField fvar,Foam::volScalarField fvar2,Foam::volScalarField fvar3, float Xref, std::vector<float> fparms)
-//<<-- Added by ZA:: END
+volScalarField calcFunc
+(
+	fvMesh & mesh,
+	std::string ftype,
+	Foam::volScalarField fvar,
+	Foam::volScalarField fvar2,
+	Foam::volScalarField fvar3,
+	float Xref,
+	std::vector<float> fparms,
+	float tunits
+)
 // volScalarField calcFunc(fvMesh & mesh, std::string ftype, Foam::volScalarField fvar, float Xref, std::vector<float> fparms)
+//<<-- Added by ZA:: END
 {
 	//volScalarField resu; 
 	volScalarField fact = fvar*0.0;
@@ -60,11 +70,17 @@ volScalarField calcFunc(fvMesh & mesh, std::string ftype, Foam::volScalarField f
 				Info<< "fvar2 dims "        << fvar3.dimensions() << " min/max " << gMin(fvar3) << " " << gMax(fvar3) << nl;
 				volScalarField eps = mesh.objectRegistry::lookupObject<volScalarField>("eps");
 				volScalarField Ceff = max(fvar, SMALL);Info<< "Ceff min/max " << gMin(Ceff) << " " << gMax(Ceff) << endl;
-				volScalarField G = (2.4*max(fvar2,scalar(1e-24))/max(sqrt(fvar3*eps), scalar(1e-24)));
-				volScalarField A = (0.315 * Ceff + 0.001)*pow(G, - 0.0915 * log(1.0 + 1240.0 * Ceff));
+				// fvar2/sqrt(fvar3) is independent of the selected length
+				// unit. Divide by seconds/modelTime so Gstar is
+				// dimensionless relative to 1 s^-1 for any time unit.
+				const scalar timeScale = max(tunits, scalar(SMALL));
+				volScalarField Gstar = (2.4*max(fvar2,scalar(1e-24))/max(sqrt(fvar3*eps), scalar(1e-24)))/timeScale;
+				volScalarField A = (0.315 * Ceff + 0.001)*pow(Gstar, -0.0915*log(1.0 + 1240.0*Ceff));
 				volScalarField B = (0.539 * Ceff + 0.001);
 				volScalarField D = min(B, max(0.001, A));
-				Info<< "G min/max " << gMin(G) << " " << gMax(G) << endl;
+				Info<< "Gstar [-] (gammaDot/(1 s^-1)) min/max "
+					<< gMin(Gstar) << " " << gMax(Gstar)
+					<< " (seconds/model-time-unit = " << timeScale << ")" << endl;
 				Info<< "A min/max " << gMin(A) << " " << gMax(A) << endl;
 				Info<< "B min/max " << gMin(B) << " " << gMax(B) << endl;
 				Info<< "D min/max " << gMin(D) << " " << gMax(D) << endl;
@@ -81,10 +97,11 @@ volScalarField calcFunc(fvMesh & mesh, std::string ftype, Foam::volScalarField f
 					<< "k0 k1 dn cN mu1 mu2"
 					<< exit(FatalError);
 				}
-                        volScalarField eps = mesh.objectRegistry::lookupObject<volScalarField>("eps");
-			volScalarField G = (2.4*max(fvar2,scalar(1e-24))/max(sqrt(fvar3*eps), scalar(1e-24)));
+			volScalarField eps = mesh.objectRegistry::lookupObject<volScalarField>("eps");
+			const scalar timeScale = max(tunits, scalar(SMALL));
+			volScalarField Gstar = (2.4*max(fvar2,scalar(1e-24))/max(sqrt(fvar3*eps), scalar(1e-24)))/timeScale;
 			volScalarField Ceff = max(fvar, SMALL);Info<< "Ceff min/max " << gMin(Ceff) << " " << gMax(Ceff) << endl;
-			volScalarField gammaEff = G;
+			volScalarField gammaEff = Gstar;
 			gammaEff.dimensions().reset(dimless);
 			gammaEff = max(gammaEff, SMALL);
 
@@ -103,7 +120,7 @@ volScalarField calcFunc(fvMesh & mesh, std::string ftype, Foam::volScalarField f
 			fact = max(eta/0.001, SMALL);
 			fact.correctBoundaryConditions();
 			Info<<"Antonio C min/max "<<gMin(Ceff)<<" "<<gMax(Ceff)
-				<<" G min/max "<<gMin(G)<<" "<<gMax(G)
+				<<" Gstar min/max "<<gMin(Gstar)<<" "<<gMax(Gstar)
 				<<" eta min/max "<<gMin(eta)<<" "<<gMax(eta)
 				<<" fact min/max "<<gMin(fact)<<" "<<gMax(fact)<<endl;
 			}

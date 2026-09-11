@@ -14,11 +14,24 @@ public:
 	//--->> START:: Added by ZA
 	std::vector<float> AntonioParms;
 	scalar muwRefValue;
+	// scalar secondsPerTimeUnit;
 	//<<-- Added by ZA:: END
 
 	float tunits;
-	
-	void init(std::string & cur_dir,IOdictionary & Tprop,fvMesh & mesh,Time & runTime,std::vector<dicFunc> & listCouples,float tunits)
+
+	//--->> START:: Added by ZA
+	void init
+	(
+		std::string & cur_dir,
+		IOdictionary & Tprop,
+		fvMesh & mesh,
+		Time & runTime,
+		std::vector<dicFunc> & listCouples,
+		float tunits
+	)
+	//<<-- Added by ZA:: END
+
+	// void init(std::string & cur_dir,IOdictionary & Tprop,fvMesh & mesh,Time & runTime,std::vector<dicFunc> & listCouples,float tunits)
 	{
 		std::cout<<"init plugin H "<<" ";
 		this->listCouples = listCouples;
@@ -82,12 +95,12 @@ public:
 				} 
 			if ((listCouples[i].Ykey=="rhow")||(listCouples[i].Ykey=="K"))
 				//--->> START:: Added by ZA
-				{fact *= calcFunc(mesh,listCouples[i].type,X,X2, X3,listCouples[i].Xref, listCouples[i].fparms);}
+				{fact *= calcFunc(mesh,listCouples[i].type,X,X2, X3,listCouples[i].Xref, listCouples[i].fparms,tunits);}
 				// {fact *= calcFunc(mesh,listCouples[i].type,X,listCouples[i].Xref,listCouples[i].fparms);}
 				//<<-- Added by ZA:: END
 				if (listCouples[i].Ykey=="muw")
 				//--->> START:: Added by ZA
-				{fact /=calcFunc(mesh,listCouples[i].type,X,X2,X3,listCouples[i].Xref, listCouples[i].fparms);}
+				{fact /=calcFunc(mesh,listCouples[i].type,X,X2,X3,listCouples[i].Xref, listCouples[i].fparms,tunits);}
 				// {fact = 1.0/calcFunc(mesh,listCouples[i].type,X,listCouples[i].Xref,listCouples[i].fparms);}
 				//<<-- Added by ZA:: END
 				if (listCouples[i].Ykey=="muShear") 

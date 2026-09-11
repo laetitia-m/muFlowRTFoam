@@ -12,7 +12,7 @@ for (size_t i=0;i<listCouples.size();i++) {
 		{
 		//--->> START:: Added by ZA
 		// Deffg *= calcFunc(mesh,listCouples[i].type,X,listCouples[i].Xref,listCouples[i].fparms);
-		Deffg *= calcFunc(mesh,listCouples[i].type,X,X2,X3,listCouples[i].Xref,listCouples[i].fparms);
+		Deffg *= calcFunc(mesh,listCouples[i].type,X,X2,X3,listCouples[i].Xref,listCouples[i].fparms,tunits);
 		//<<-- Added by ZA:: END
 		Info<<"Deffg "<<Deffg[0]<<endl;
 		}

@@ -89,11 +89,18 @@ if (cellsHwel.size()>0)
 
 		if (qHwel[i]<0) 
 		{
-			CSp[i1] = -qHwel[i]/v;
+			// CSp[i1] = -qHwel[i]/v;
+			//--->> START:: Added by ZA
+			CSp[i1] += -qHwel[i]/v;
+			//<<-- Added by ZA:: END
 		} // In Sp term as discharge prop to local concentration, a positive Sp will make solution implicit
 		else 
 		{
-			CSu[i1] = -qHwel[i]/v*cellsCwelData[i*4+2];
+			// CSu[i1] = -qHwel[i]/v*cellsCwelData[i*4+2];
+			//--->> START:: Added by ZA
+			CSu[i1] += -qHwel[i]/v*cellsCwelData[i*4+2];
+			//<<-- Added by ZA:: END
+
 		} // The injected mass is the water flow x the conc
 	}
 }
@@ -222,16 +229,31 @@ if (cellsCfix.size()>0)
 Info << "   - Solve the diffusion-dispersion equation for C... " << endl;
 
 //-- Concentration equation
+// fvScalarMatrix CEqn
+// (
+// 	Rf * thetaw * fvm::ddt(C) 
+// 	+ Rf * C * fvc::ddt(thetaw) 
+// 	+ fvc::div(phiw, C, "div(phiw,C)") 
+// 	- fvm::laplacian(Deffw, C, "laplacian(Deffw,C)")
+// 	+ thetaw * fvm::Sp(lbdaw,C)
+// 	+ fvm::SuSp(CSp, C)
+// 	== - CSu - thetaw * gamw
+// );
+
+//--->> START:: Added by ZA
 fvScalarMatrix CEqn
 (
-	Rf * thetaw * fvm::ddt(C) 
+	fvm::ddt(Rf * thetaw, C) 
 	+ Rf * C * fvc::ddt(thetaw) 
 	+ fvc::div(phiw, C, "div(phiw,C)") 
 	- fvm::laplacian(Deffw, C, "laplacian(Deffw,C)")
 	+ thetaw * fvm::Sp(lbdaw,C)
-	+ fvm::SuSp(CSp, C)
+	+ fvm::Sp(CSp, C)
 	== - CSu - thetaw * gamw
 );
+
+//<<-- Added by ZA:: END
+
 
 //-- Do a specific treatment for inactive and dry cells
 if (inactiveCells.size()+dryCells.size()>0) 

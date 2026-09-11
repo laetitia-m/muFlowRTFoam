@@ -14,8 +14,8 @@ class dicFunc
 };
 
 //this is the calculation of the value of the multiplying factor from a function
-// it returns a vector of multiplygin factors given the value of fvar
-// the first paramaters is the reference
+// it returns a vector of multiplying factors given the value of fvar
+// the first paramater is the reference
 //--->> START:: Added by ZA
 volScalarField calcFunc
 (
@@ -31,108 +31,164 @@ volScalarField calcFunc
 // volScalarField calcFunc(fvMesh & mesh, std::string ftype, Foam::volScalarField fvar, float Xref, std::vector<float> fparms)
 //<<-- Added by ZA:: END
 {
-	//volScalarField resu; 
 	volScalarField fact = fvar*0.0;
 	fact.dimensions().reset(dimless);
-	fvar.dimensions().reset(dimless);
-	//--->> START:: Added by ZA
-	fvar2.dimensions().reset(dimless);
-	fvar3.dimensions().reset(dimless);
-	//fvar4.dimensions().reset.(dimless);
-	//<<-- Added by ZA:: END
-		/*int i;
-		int n = fvar.size();//Info<<"in func n "<<n<<" type "<<ftype<<endl;
-		resu.resize(n);*/
-		if (ftype == "linear")
-			{
-			//for (i=0;i<n;i++) {resu[i] = 1+ fparms[1]*(fvar()[i]-fparms[0]);}
-			fact = 1.+ fparms[0]*(fvar-Xref);
-			Info<<"in calc func, fvar "<<fvar[4]<<" fparm "<<fparms[0]<<" fact(4) "<<fact[4]<<endl;
-			}
-		if (ftype == "polynomial")
-			{
-			//for (i=0;i<n;i++) {resu[i] = 1+ fparms[1]*(fvar()[i]-fparms[0]);}
-			fact = 1.+ fparms[0]*(fvar-Xref) + fparms[1]*pow(fvar-Xref,2) ;
-			Info<<"in calc func, fvar "<<fvar[0]<<" fparm "<<fparms[0]<<" fact(4) "<<fact[4]<<endl;
-			}
-		if (ftype == "exponential")
-			{
-			//for (i=0;i<n;i++) {resu[i] = 1+ fparms[1]*(fvar()[i]-fparms[0]);}
-			fact = 1.+ fparms[0]*exp(fparms[1]*(fvar-Xref)) ;
-			Info<<"in calc func, fvar "<<fvar[0]<<" fparm "<<fparms[0]<<" fact(4) "<<fact[4]<<endl;
-			}
-			
+	if (ftype != "emulsion")
+	{
+		fvar.dimensions().reset(dimless);
 		//--->> START:: Added by ZA
-		if (ftype == "power")
-			{
-				Info<< "fvar dims " << fvar.dimensions()  << " min/max " << gMin(fvar)  << " " << gMax(fvar)  << nl;
-				Info<< "fvar2 dims "        << fvar2.dimensions() << " min/max " << gMin(fvar2) << " " << gMax(fvar2) << nl;
-				Info<< "fvar2 dims "        << fvar3.dimensions() << " min/max " << gMin(fvar3) << " " << gMax(fvar3) << nl;
-				volScalarField eps = mesh.objectRegistry::lookupObject<volScalarField>("eps");
-				volScalarField Ceff = max(fvar, SMALL);Info<< "Ceff min/max " << gMin(Ceff) << " " << gMax(Ceff) << endl;
-				// fvar2/sqrt(fvar3) is independent of the selected length
-				// unit. Divide by seconds/modelTime so Gstar is
-				// dimensionless relative to 1 s^-1 for any time unit.
-				const scalar timeScale = max(tunits, scalar(SMALL));
-				volScalarField Gstar = (2.4*max(fvar2,scalar(1e-24))/max(sqrt(fvar3*eps), scalar(1e-24)))/timeScale;
-				volScalarField A = (0.315 * Ceff + 0.001)*pow(Gstar, -0.0915*log(1.0 + 1240.0*Ceff));
-				volScalarField B = (0.539 * Ceff + 0.001);
-				volScalarField D = min(B, max(0.001, A));
-				Info<< "Gstar [-] (gammaDot/(1 s^-1)) min/max "
-					<< gMin(Gstar) << " " << gMax(Gstar)
-					<< " (seconds/model-time-unit = " << timeScale << ")" << endl;
-				Info<< "A min/max " << gMin(A) << " " << gMax(A) << endl;
-				Info<< "B min/max " << gMin(B) << " " << gMax(B) << endl;
-				Info<< "D min/max " << gMin(D) << " " << gMax(D) << endl;
-				fact = D/0.001;
-				fact.correctBoundaryConditions();
-				Info << "fact min/max " << gMin(fact) << " " << gMax(fact) << endl;
-			}
-		if (ftype == "Antonio")
-			{
-			if (fparms.size() != 6)
-				{
-				FatalErrorIn("calcFunc")
-					<< "required 6 coefficients: "
-					<< "k0 k1 dn cN mu1 mu2"
-					<< exit(FatalError);
-				}
-			volScalarField eps = mesh.objectRegistry::lookupObject<volScalarField>("eps");
-			const scalar timeScale = max(tunits, scalar(SMALL));
-			volScalarField Gstar = (2.4*max(fvar2,scalar(1e-24))/max(sqrt(fvar3*eps), scalar(1e-24)))/timeScale;
-			volScalarField Ceff = max(fvar, SMALL);Info<< "Ceff min/max " << gMin(Ceff) << " " << gMax(Ceff) << endl;
-			volScalarField gammaEff = Gstar;
-			gammaEff.dimensions().reset(dimless);
-			gammaEff = max(gammaEff, SMALL);
-
-			scalar k0 = fparms[0];
-			scalar k1 = fparms[1];
-			scalar dn = fparms[2];
-			scalar cN = max(fparms[3], scalar(SMALL));
-			scalar mu1 = fparms[4];
-			scalar mu2 = fparms[5];
-
-			volScalarField k = k0 + k1*Ceff;
-			volScalarField n = 1.0 - dn*log(1.0 + Ceff/cN);
-			volScalarField muInf = 0.001 + mu1*(exp(min(mu2*Ceff, 50.0)) - 1.0);
-			volScalarField eta = k*pow(gammaEff, n-1.0) + muInf;
-
-			fact = max(eta/0.001, SMALL);
-			fact.correctBoundaryConditions();
-			Info<<"Antonio C min/max "<<gMin(Ceff)<<" "<<gMax(Ceff)
-				<<" Gstar min/max "<<gMin(Gstar)<<" "<<gMax(Gstar)
-				<<" eta min/max "<<gMin(eta)<<" "<<gMax(eta)
-				<<" fact min/max "<<gMin(fact)<<" "<<gMax(fact)<<endl;
-			}
+		fvar2.dimensions().reset(dimless);
+		fvar3.dimensions().reset(dimless);
 		//<<-- Added by ZA:: END
+	}
 
-		if (ftype=="kozeny") // kozeny F=eps^3/(1-eps^2), with the initial being 
-			{
-			volScalarField eps0 = mesh.objectRegistry::lookupObject<volScalarField>("eps0");  //Xvar is the name of the variable
-			fact = (pow(fvar,3)/pow(1-fvar,2)) / (pow(eps0,3)/pow(1-eps0,2));
-			Info<<"in func koz "<<fvar[0]<<" fact "<<fact[0]<<endl;
-			}
-		return fact;
+	if (ftype == "linear")
+	{
+		fact = 1.+ fparms[0]*(fvar-Xref);
+		Info<<"in calc func, fvar "<<fvar[4]<<" fparm "<<fparms[0]<<" fact(4) "<<fact[4]<<endl;
+	}
+	if (ftype == "polynomial")
+	{
+		fact = 1.+ fparms[0]*(fvar-Xref) + fparms[1]*pow(fvar-Xref,2) ;
+		Info<<"in calc func, fvar "<<fvar[0]<<" fparm "<<fparms[0]<<" fact(4) "<<fact[4]<<endl;
+	}
+	if (ftype == "exponential")
+	{
+		fact = 1.+ fparms[0]*exp(fparms[1]*(fvar-Xref)) ;
+		Info<<"in calc func, fvar "<<fvar[0]<<" fparm "<<fparms[0]<<" fact(4) "<<fact[4]<<endl;
+	}
+	//--->> START:: Added by ZA
+	if (ftype == "power")
+	{
+		Info<< "fvar dims " << fvar.dimensions()  << " min/max " << gMin(fvar)  << " " << gMax(fvar)  << nl;
+		Info<< "fvar2 dims "        << fvar2.dimensions() << " min/max " << gMin(fvar2) << " " << gMax(fvar2) << nl;
+		Info<< "fvar2 dims "        << fvar3.dimensions() << " min/max " << gMin(fvar3) << " " << gMax(fvar3) << nl;
+		volScalarField eps = mesh.objectRegistry::lookupObject<volScalarField>("eps");
+		volScalarField Ceff = max(fvar, SMALL);Info<< "Ceff min/max " << gMin(Ceff) << " " << gMax(Ceff) << endl;
+		const scalar timeScale = max(tunits, scalar(SMALL));
+		volScalarField Gstar = (2.4*max(fvar2,scalar(1e-24))/max(sqrt(fvar3*eps), scalar(1e-24)))/timeScale;
+		volScalarField A = (0.315 * Ceff + 0.001)*pow(Gstar, -0.0915*log(1.0 + 1240.0*Ceff));
+		volScalarField B = (0.539 * Ceff + 0.001);
+		volScalarField D = min(B, max(0.001, A));
+		Info<< "Gstar [-] (gammaDot/(1 s^-1)) min/max "
+			<< gMin(Gstar) << " " << gMax(Gstar)
+			<< " (seconds/model-time-unit = " << timeScale << ")" << endl;
+		Info<< "A min/max " << gMin(A) << " " << gMax(A) << endl;
+		Info<< "B min/max " << gMin(B) << " " << gMax(B) << endl;
+		Info<< "D min/max " << gMin(D) << " " << gMax(D) << endl;
+		fact = D/0.001;
+		fact.correctBoundaryConditions();
+		Info << "fact min/max " << gMin(fact) << " " << gMax(fact) << endl;
+	}
+	if (ftype == "emulsion")
+	{
+		if (fparms.size() != 7)
+		{
+			FatalErrorIn("calcFunc")
+				<< "emulsion requires 7 coefficients: "
+				<< "k0 k1 dn cN mu1 mu2 oilFractionInjPct"
+				<< exit(FatalError);
+		}
+
+		if (Xref <= SMALL)
+		{
+			FatalErrorIn("calcFunc")
+				<< "emulsion requires Xref (= Cref) > 0; got "
+				<< Xref
+				<< exit(FatalError);
+		}
+	
+		const scalar k0 = fparms[0];
+		const scalar k1 = fparms[1];
+		const scalar dn = fparms[2];
+		const scalar cN = max(fparms[3], scalar(SMALL));
+		const scalar mu1 = fparms[4];
+		const scalar mu2 = fparms[5];
+		const scalar oilF = fparms[6];
+
+		if (oilF < 0.0 || oilF > 100.0)
+		{
+			FatalErrorIn("calcFunc")
+				<< "oilFractionInjPct must be between 0 and 100; got "
+				<< oilF
+				<< exit(FatalError);
+		}
+
+		volScalarField eps = mesh.objectRegistry::lookupObject<volScalarField>("eps");
+		// Xref is Cref and has the same dimensions as transported C.
+		const dimensionedScalar Cref
+		(
+			"Cref",
+			fvar.dimensions(),
+			Xref
+		);
+
+		volScalarField alphaEm =
+			min(max(fvar/Cref, scalar(0)), scalar(1));
+		volScalarField cOilPct = oilF*alphaEm;
+
+		const dimensionedScalar smallKeps
+		(
+			"smallKeps",
+			dimArea,
+			SMALL
+		);
+
+
+		const dimensionedScalar onePerSecond
+		(
+			"onePerSecond",
+			dimless/dimTime,
+			max(tunits, scalar(SMALL))
+		);
+
+		const scalar gammaMin = 1e-6;
+		volScalarField gammaEff =
+			max
+			(
+				(2.4*fvar2)
+			   /(
+					sqrt(max(fvar3*eps, smallKeps))
+				   *onePerSecond
+				),
+				gammaMin
+			);
+
+		volScalarField k = k0 + k1*cOilPct;
+		volScalarField n =
+			1.0 - dn*log(1.0 + cOilPct/cN);
+		volScalarField muInf =
+			0.001 + mu1*(exp(mu2*cOilPct) - 1.0);
+		volScalarField eta =
+			k*pow(gammaEff, n - 1.0) + muInf;
+ 
+		const label maxCell = findMax(fvar.primitiveField());
+                Info<< "MAX C (myFunc):" << " cell=" << maxCell << " C=" << fvar[maxCell] << " gammaEff=" << gammaEff[maxCell]
+                << " eta=" << eta[maxCell] << endl;
+		fact = max(eta/0.001, scalar(SMALL));
+		fact.correctBoundaryConditions();
+
+		Info<< "emulsion alphaEm min/max "
+			<< gMin(alphaEm) << " " << gMax(alphaEm)
+			<< " cOilPct min/max "
+			<< gMin(cOilPct) << " " << gMax(cOilPct)
+			<< " gammaEff [s^-1] min/max "
+			<< gMin(gammaEff) << " " << gMax(gammaEff)
+			<< " eta [Pa s] min/max "
+			<< gMin(eta) << " " << gMax(eta)
+			<< " fact min/max "
+			<< gMin(fact) << " " << gMax(fact)
+			<< endl;
+	}
+	//<<-- Added by ZA:: END
+
+	if (ftype=="kozeny") // kozeny F=eps^3/(1-eps^2), with the initial being 
+	{
+		volScalarField eps0 = mesh.objectRegistry::lookupObject<volScalarField>("eps0");  //Xvar is the name of the variable
+		fact = (pow(fvar,3)/pow(1-fvar,2)) / (pow(eps0,3)/pow(1-eps0,2));
+		Info<<"in func koz "<<fvar[0]<<" fact "<<fact[0]<<endl;
+	}
+	return fact;
 };
 
 volScalarField calcFunc2(fvMesh & mesh, std::string ftype, Foam::volScalarField C, Foam::volScalarField U,float Xref, std::vector<float> fparms,float tunits)

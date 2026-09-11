@@ -69,6 +69,24 @@ if (cellsHwel.size()>0)
 	{ 
 		i1=cellsCwel[i];
 		v=mesh.V()[i1];
+
+		//--->> START:: Added by ZA
+		if (qHwel[i] > 0)
+		{
+			const scalar injectionNumber = qHwel[i]*runTime.deltaTValue()/(max(thetaw[i1], scalar(SMALL))*v);
+			Info<< "well " << i
+			<< " cell " << i1
+			<< " q " << qHwel[i]
+			<< " Cwel " << cellsCwelData[i*4+2]
+			<< " Ccell " << C[i1]
+			<< " theta " << thetaw[i1]
+			<< " cellVolume " << v
+			<< " deltaT " << runTime.deltaTValue()
+			<< " injectionNumber " << injectionNumber
+			<< endl;
+        }
+		//<<-- Added by ZA:: END
+
 		if (qHwel[i]<0) 
 		{
 			CSp[i1] = -qHwel[i]/v;
@@ -247,6 +265,33 @@ if (inactiveCells.size()+dryCells.size()>0)
 
 //-- Solve the equation
 CEqn.solve();
+
+//--->> START:: Added by ZA
+label maxCell = 0;
+
+forAll(C, celli)
+{
+    if (C[celli] > C[maxCell])
+    {
+        maxCell = celli;
+    }
+}
+
+volScalarField dThetaDt = fvc::ddt(thetaw);
+volScalarField divPhi = fvc::div(phiw);
+
+Info<< "MAX C:"
+    << " cell=" << maxCell
+    << " C=" << C[maxCell]
+    << " theta=" << thetaw[maxCell]
+    << " dThetaDt=" << dThetaDt[maxCell]
+    << " divPhi=" << divPhi[maxCell]
+    << " Umag=" << Umag[maxCell]
+    << " CSu=" << CSu[maxCell]
+    << " CSp=" << CSp[maxCell]
+    << endl;
+//<<-- Added by ZA:: END
+
 
 //---------------------------------//
 //-- Compute dC: deltaC

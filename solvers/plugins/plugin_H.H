@@ -12,7 +12,7 @@ public:
 	std::vector<dicFunc> listCouples;
 
 	//--->> START:: Added by ZA
-	std::vector<float> AntonioParms;
+	std::vector<float> emulsionParms;
 	scalar muwRefValue;
 	// scalar secondsPerTimeUnit;
 	//<<-- Added by ZA:: END
@@ -39,29 +39,29 @@ public:
 		//--->> START:: Added by ZA
 		dimensionedScalar muwRef(Tprop.lookupOrDefault("muwRef",dimensionedScalar("muwRef",dimensionSet(1,-1,-1,0,0,0,0),1e-3)));
 		this->muwRefValue = muwRef.value();
-		if (Tprop.found("AntonioCoeffs"))
+		if (Tprop.found("emulsionCoeffs"))
 		{
-			const dictionary& coeffs = Tprop.subDict("AntonioCoeffs");
-			this->AntonioParms.resize(6);
-			this->AntonioParms[0] = readScalar(coeffs.lookup("k0"));
-			this->AntonioParms[1] = readScalar(coeffs.lookup("k1"));
-			this->AntonioParms[2] = readScalar(coeffs.lookup("dn"));
-			this->AntonioParms[3] = readScalar(coeffs.lookup("cN"));
-			this->AntonioParms[4] = readScalar(coeffs.lookup("mu1"));
-			this->AntonioParms[5] = readScalar(coeffs.lookup("mu2"));
+			const dictionary& coeffs = Tprop.subDict("emulsionCoeffs");
+			this->emulsionParms.resize(6);
+			this->emulsionParms[0] = readScalar(coeffs.lookup("k0"));
+			this->emulsionParms[1] = readScalar(coeffs.lookup("k1"));
+			this->emulsionParms[2] = readScalar(coeffs.lookup("dn"));
+			this->emulsionParms[3] = readScalar(coeffs.lookup("cN"));
+			this->emulsionParms[4] = readScalar(coeffs.lookup("mu1"));
+			this->emulsionParms[5] = readScalar(coeffs.lookup("mu2"));
 		}
 		for (size_t i=0;i<this->listCouples.size();i++)
 		{
-			if ((this->listCouples[i].type=="Antonio") && (this->listCouples[i].fparms.size()==0))
+			if ((this->listCouples[i].type=="emulsion") && (this->listCouples[i].fparms.size()==0))
 			{
-				if (this->AntonioParms.size() != 6)
+				if (this->emulsionParms.size() != 6)
 				{
 					FatalErrorIn("plugin_H::init")
-						<< "Antonio selected in coupling with 0 inline parameters, "
-						<< "but transportProperties has no complete AntonioCoeffs dictionary"
+						<< "emulsion selected in coupling with 0 inline parameters, "
+						<< "but transportProperties has no complete emulsionCoeffs dictionary"
 						<< exit(FatalError);
 				}
-				this->listCouples[i].setParms(this->AntonioParms);
+				this->listCouples[i].setParms(this->emulsionParms);
 			}
 		}
 		//<<-- Added by ZA:: END

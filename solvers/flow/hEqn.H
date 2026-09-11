@@ -374,7 +374,7 @@ volScalarField factMout
     plugH.corrM(mesh, freak)
 );
 
-munew = muw/(factMout + dimensionedScalar("eps", factMout.dimensions(), SMALL));
+munew = muw/factM;
 munew.correctBoundaryConditions();
 
 volScalarField etaCheck

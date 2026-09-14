@@ -133,10 +133,12 @@ int rSteps=1;
 
 int main(int argc, char *argv[])
 {
-
 	my_phq freak;
 
-	#if OPENFOAM >= 230000
+	#include "foamVersion.H"
+
+
+	#if defined(WM_PROJECT_VERSION_NUMBER) &&  WM_PROJECT_VERSION_NUMBER >= 10
 		#define TIME_NAME(t) (t).name()
 	#else
 		#define TIME_NAME(t) (t).timeName()
